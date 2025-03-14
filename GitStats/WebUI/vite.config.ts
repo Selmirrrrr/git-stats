@@ -19,5 +19,10 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
-  }
+  },
+  // Base path for GitHub Pages - use your GitHub username/repo
+  // Format: /<repository-name>/
+  // Leave as empty string if you're deploying to a custom domain
+  // or your repository name is <username>.github.io
+  base: '/git-stats/'
 })

@@ -18,7 +18,9 @@ export const Dashboard = () => {
   };
 
   const loadSampleData = () => {
-    setJsonPath('/sample-data.json');
+    // Use relative path that works with GitHub Pages and local development
+    const sampleDataPath = import.meta.env.BASE_URL + 'sample-data.json';
+    setJsonPath(sampleDataPath);
   };
 
   // Calculate totals
