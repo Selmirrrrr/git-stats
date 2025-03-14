@@ -1,5 +1,17 @@
-import { CommitInfo, CommitterStats } from '../types';
-import { format, parseISO, getHours, getDay, getMonth, getDate } from 'date-fns';
+import { CommitInfo, CommitterStats, BurnoutRiskLevel } from '../types';
+import { format, parseISO, getHours, getDay, getMonth, getDate, isWeekend } from 'date-fns';
+
+// Define standard work hours (9 AM to 5 PM)
+const WORK_HOURS_START = 9;
+const WORK_HOURS_END = 17;
+
+// Define burnout risk thresholds
+const BURNOUT_THRESHOLDS = {
+  LOW: 20,      // 0-20%: Low risk
+  MODERATE: 35, // 21-35%: Moderate risk
+  HIGH: 50,     // 36-50%: High risk
+  // Above 50%: Severe risk
+};
 
 export function parseCommitData(commits: CommitInfo[]): CommitInfo[] {
   return commits.map(commit => ({
@@ -23,25 +35,105 @@ export function getCommitterStats(commits: CommitInfo[]): CommitterStats[] {
       totalAdditions: 0,
       totalDeletions: 0,
       totalChanges: 0,
-      earlyMorningCommits: 0
+      earlyMorningCommits: 0,
+      afterHoursCommits: 0,
+      weekendCommits: 0,
+      burnoutRiskScore: 0,
+      commitsByHour: Array(24).fill(0) // Initialize 24 hours with zeros
     };
 
     const commitTime = new Date(commit.CommitTime);
     const hour = getHours(commitTime);
+    const isWeekendDay = isWeekend(commitTime);
     
+    // Update basic stats
     existingStats.totalCommits += 1;
     existingStats.totalAdditions += commit.Additions;
     existingStats.totalDeletions += commit.Deletions;
     existingStats.totalChanges += commit.Additions + commit.Deletions;
     
+    // Update hour distribution
+    existingStats.commitsByHour[hour] += 1;
+    
+    // Update burnout risk indicators
     if (hour >= 0 && hour < 6) {
       existingStats.earlyMorningCommits += 1;
+    }
+    
+    // After hours: before work hours or after work hours
+    if (hour < WORK_HOURS_START || hour >= WORK_HOURS_END) {
+      existingStats.afterHoursCommits += 1;
+    }
+    
+    // Weekend commits
+    if (isWeekendDay) {
+      existingStats.weekendCommits += 1;
     }
 
     committerMap.set(key, existingStats);
   });
 
-  return Array.from(committerMap.values());
+  // Calculate burnout risk scores
+  const committerStats = Array.from(committerMap.values());
+  committerStats.forEach(stats => {
+    // Calculate percentages
+    const afterHoursPercent = (stats.afterHoursCommits / stats.totalCommits) * 100;
+    const earlyMorningPercent = (stats.earlyMorningCommits / stats.totalCommits) * 100;
+    const weekendPercent = (stats.weekendCommits / stats.totalCommits) * 100;
+    
+    // Weighted burnout risk score (scale of 0-100)
+    // Early morning commits are weighted more heavily as they indicate extreme hours
+    stats.burnoutRiskScore = Math.min(100, Math.round(
+      (afterHoursPercent * 0.4) + 
+      (earlyMorningPercent * 0.4) + 
+      (weekendPercent * 0.2)
+    ));
+  });
+
+  return committerStats;
+}
+
+export function getBurnoutRiskLevel(score: number): BurnoutRiskLevel {
+  if (score <= BURNOUT_THRESHOLDS.LOW) {
+    return {
+      level: 'low',
+      color: 'rgb(34, 197, 94)', // green-500
+      description: 'Healthy work pattern with occasional after-hours work'
+    };
+  } else if (score <= BURNOUT_THRESHOLDS.MODERATE) {
+    return {
+      level: 'moderate',
+      color: 'rgb(234, 179, 8)', // yellow-500
+      description: 'Some after-hours work that may need attention'
+    };
+  } else if (score <= BURNOUT_THRESHOLDS.HIGH) {
+    return {
+      level: 'high',
+      color: 'rgb(249, 115, 22)', // orange-500
+      description: 'Significant after-hours work that indicates potential burnout risk'
+    };
+  } else {
+    return {
+      level: 'severe',
+      color: 'rgb(239, 68, 68)', // red-500
+      description: 'Extensive after-hours work suggesting high burnout risk'
+    };
+  }
+}
+
+export function getCommitsByHour(commits: CommitInfo[]): { label: string, count: number }[] {
+  const hourCounts = Array(24).fill(0);
+  
+  commits.forEach(commit => {
+    const date = new Date(commit.CommitTime);
+    const hour = getHours(date);
+    hourCounts[hour]++;
+  });
+  
+  return hourCounts.map((count, hour) => ({
+    label: hour.toString().padStart(2, '0') + ':00',
+    count
+  }));
 }
 
 export function getTopCommitters(committerStats: CommitterStats[], sortBy: keyof CommitterStats, limit: number = 3): CommitterStats[] {
@@ -50,7 +142,11 @@ export function getTopCommitters(committerStats: CommitterStats[], sortBy: keyof
     .slice(0, limit);
 }
 
-export function getCommitsByTimeframe(commits: CommitInfo[], timeframeType: 'weekday' | 'month' | 'dayOfMonth'): { label: string, count: number }[] {
+export function getCommitsByTimeframe(commits: CommitInfo[], timeframeType: 'weekday' | 'month' | 'dayOfMonth' | 'hour'): { label: string, count: number }[] {
+  if (timeframeType === 'hour') {
+    return getCommitsByHour(commits);
+  }
+  
   const countMap = new Map<number, number>();
   
   commits.forEach(commit => {

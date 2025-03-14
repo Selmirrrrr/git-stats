@@ -3,6 +3,8 @@ import { TopCommittersCard } from '../components/TopCommittersCard';
 import { TimeframeChart } from '../components/TimeframeChart';
 import { CommitSearch } from '../components/CommitSearch';
 import { FileUploader } from '../components/FileUploader';
+import { BurnoutRiskCard } from '../components/BurnoutRiskCard';
+import { CommitHourHeatmap } from '../components/CommitHourHeatmap';
 import { useCommitData } from '../hooks/useCommitData';
 
 export const Dashboard = () => {
@@ -85,80 +87,95 @@ export const Dashboard = () => {
             <CommitSearch commits={commits} />
           </div>
           
+          {/* Burnout risk metrics - new section */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-4">Work Pattern Analysis</h2>
+            <div className="grid grid-cols-1 gap-6">
+              <CommitHourHeatmap commits={commits} />
+              <BurnoutRiskCard committerStats={committerStats} />
+            </div>
+          </div>
+          
           {/* Top committers section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <TopCommittersCard
-              committerStats={committerStats}
-              sortBy="totalCommits"
-              title="Top Committers (by Commits)"
-              chartColor="rgba(54, 162, 235, 0.6)"
-            />
-            
-            <TopCommittersCard
-              committerStats={committerStats}
-              sortBy="totalChanges"
-              title="Top Committers (by Total Changes)"
-              chartColor="rgba(255, 99, 132, 0.6)"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <TopCommittersCard
-              committerStats={committerStats}
-              sortBy="totalAdditions"
-              title="Top Committers (by Additions)"
-              chartColor="rgba(75, 192, 192, 0.6)"
-            />
-            
-            <TopCommittersCard
-              committerStats={committerStats}
-              sortBy="totalDeletions"
-              title="Top Committers (by Deletions)"
-              chartColor="rgba(255, 159, 64, 0.6)"
-            />
-            
-            <TopCommittersCard
-              committerStats={committerStats}
-              sortBy="earlyMorningCommits"
-              title="Top Night Owls (Midnight-6AM)"
-              chartColor="rgba(153, 102, 255, 0.6)"
-            />
-          </div>
-
-          {/* Time-based charts section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="card">
-              <h3 className="text-lg font-semibold mb-4">Commits by Day of Week</h3>
-              <TimeframeChart
-                commits={commits}
-                timeframeType="weekday"
-                title=""
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-4">Top Contributors</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <TopCommittersCard
+                committerStats={committerStats}
+                sortBy="totalCommits"
+                title="Top Committers (by Commits)"
                 chartColor="rgba(54, 162, 235, 0.6)"
               />
-            </div>
-            
-            <div className="card">
-              <h3 className="text-lg font-semibold mb-4">Commits by Month</h3>
-              <TimeframeChart
-                commits={commits}
-                timeframeType="month"
-                title=""
+              
+              <TopCommittersCard
+                committerStats={committerStats}
+                sortBy="totalChanges"
+                title="Top Committers (by Total Changes)"
                 chartColor="rgba(255, 99, 132, 0.6)"
               />
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <TopCommittersCard
+                committerStats={committerStats}
+                sortBy="totalAdditions"
+                title="Top Committers (by Additions)"
+                chartColor="rgba(75, 192, 192, 0.6)"
+              />
+              
+              <TopCommittersCard
+                committerStats={committerStats}
+                sortBy="totalDeletions"
+                title="Top Committers (by Deletions)"
+                chartColor="rgba(255, 159, 64, 0.6)"
+              />
+              
+              <TopCommittersCard
+                committerStats={committerStats}
+                sortBy="weekendCommits"
+                title="Weekend Warriors"
+                chartColor="rgba(153, 102, 255, 0.6)"
+              />
+            </div>
           </div>
 
-          {/* Day of month chart on its own line */}
+          {/* Time-based analysis section */}
           <div className="mb-6">
-            <div className="card">
-              <h3 className="text-lg font-semibold mb-4">Commits by Day of Month</h3>
-              <TimeframeChart
-                commits={commits}
-                timeframeType="dayOfMonth"
-                title=""
-                chartColor="rgba(255, 205, 86, 0.6)"
-                height={400}
-              />
+            <h2 className="text-2xl font-bold mb-4">Time-based Analysis</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="card">
+                <h3 className="text-lg font-semibold mb-4">Commits by Day of Week</h3>
+                <TimeframeChart
+                  commits={commits}
+                  timeframeType="weekday"
+                  title=""
+                  chartColor="rgba(54, 162, 235, 0.6)"
+                />
+              </div>
+              
+              <div className="card">
+                <h3 className="text-lg font-semibold mb-4">Commits by Month</h3>
+                <TimeframeChart
+                  commits={commits}
+                  timeframeType="month"
+                  title=""
+                  chartColor="rgba(255, 99, 132, 0.6)"
+                />
+              </div>
+            </div>
+
+            {/* Day of month chart on its own line */}
+            <div>
+              <div className="card">
+                <h3 className="text-lg font-semibold mb-4">Commits by Day of Month</h3>
+                <TimeframeChart
+                  commits={commits}
+                  timeframeType="dayOfMonth"
+                  title=""
+                  chartColor="rgba(255, 205, 86, 0.6)"
+                  height={400}
+                />
+              </div>
             </div>
           </div>
         </>
