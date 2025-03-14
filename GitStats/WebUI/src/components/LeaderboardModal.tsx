@@ -42,11 +42,6 @@ export const LeaderboardModal = ({
   // Calculate some basic statistics
   const totalCommitters = committerStats.length;
   const activeCommitters = committerStats.filter(c => (c[sortBy] as number) > 0).length;
-  const topContributor = sortedCommitters.length > 0 ? sortedCommitters[0] : null;
-  const topContribution = topContributor ? (topContributor[sortBy] as number) : 0;
-  const topPercentage = totalValue > 0 && topContributor 
-    ? ((topContribution / totalValue) * 100).toFixed(1) 
-    : '0';
     
   // Calculate some distribution metrics
   let top20Percent = 0;

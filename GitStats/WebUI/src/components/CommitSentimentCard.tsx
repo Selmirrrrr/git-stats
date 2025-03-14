@@ -74,7 +74,7 @@ export const CommitSentimentCard = ({
         backgroundColor: filteredCommitters.map(c => {
           const sentiment = categorizeSentiment(c.averageSentiment);
           return sentiment.color;
-        })
+        }).join(',')
       }
     ]
   };

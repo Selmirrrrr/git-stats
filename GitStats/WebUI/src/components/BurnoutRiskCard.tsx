@@ -34,7 +34,7 @@ export const BurnoutRiskCard = ({
       {
         label: 'Burnout Risk Score',
         data: highRiskCommitters.map(c => c.burnoutRiskScore),
-        backgroundColor: highRiskCommitters.map(c => getBurnoutRiskLevel(c.burnoutRiskScore).color)
+        backgroundColor: highRiskCommitters.map(c => getBurnoutRiskLevel(c.burnoutRiskScore).color).join(',')
       }
     ]
   };

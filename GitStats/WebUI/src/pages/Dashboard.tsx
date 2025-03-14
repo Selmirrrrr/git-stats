@@ -19,7 +19,8 @@ export const Dashboard = () => {
 
   const loadSampleData = () => {
     // Use relative path that works with GitHub Pages and local development
-    const sampleDataPath = import.meta.env.BASE_URL + 'sample-data.json';
+    const basePath = '/git-stats/';
+    const sampleDataPath = basePath + 'sample-data.json';
     setJsonPath(sampleDataPath);
   };
 

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { CommitInfo } from '../types';
 import { getCommitsByTimeframe } from '../utils/commitAnalyzer';
 

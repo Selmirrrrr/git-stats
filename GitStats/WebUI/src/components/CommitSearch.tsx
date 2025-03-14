@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CommitInfo } from '../types';
 import { searchCommitById, searchCommitsByText } from '../utils/commitAnalyzer';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 
 interface CommitSearchProps {
   commits: CommitInfo[];

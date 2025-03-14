@@ -1,5 +1,5 @@
 import { CommitInfo, CommitterStats, BurnoutRiskLevel } from '../types';
-import { format, parseISO, getHours, getDay, getMonth, getDate, isWeekend } from 'date-fns';
+import { format, getHours, getDay, getMonth, getDate, isWeekend } from 'date-fns';
 import { analyzeSentiment } from './sentimentAnalyzer';
 
 // Define standard work hours (9 AM to 5 PM)

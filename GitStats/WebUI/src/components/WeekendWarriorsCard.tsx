@@ -37,7 +37,7 @@ export const WeekendWarriorsCard = ({
       {
         label: 'Weekend Commits %',
         data: filteredWarriors.map(c => c.weekendCommitPct),
-        backgroundColor: filteredWarriors.map(c => getWeekendWarriorLevel(c.weekendCommitPct).color)
+        backgroundColor: filteredWarriors.map(c => getWeekendWarriorLevel(c.weekendCommitPct).color).join(',')
       }
     ]
   };
