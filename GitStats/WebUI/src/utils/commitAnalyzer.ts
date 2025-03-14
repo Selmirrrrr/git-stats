@@ -1,5 +1,6 @@
 import { CommitInfo, CommitterStats, BurnoutRiskLevel } from '../types';
 import { format, parseISO, getHours, getDay, getMonth, getDate, isWeekend } from 'date-fns';
+import { analyzeSentiment } from './sentimentAnalyzer';
 
 // Define standard work hours (9 AM to 5 PM)
 const WORK_HOURS_START = 9;
@@ -13,15 +14,32 @@ const BURNOUT_THRESHOLDS = {
   // Above 50%: Severe risk
 };
 
+// Define weekend warrior thresholds (percentage of commits on weekends)
+const WEEKEND_WARRIOR_THRESHOLDS = {
+  CASUAL: 10,      // 0-10%: Casual weekend worker
+  MODERATE: 25,    // 11-25%: Moderate weekend worker
+  DEDICATED: 40,   // 26-40%: Dedicated weekend worker
+  // Above 40%: Weekend warrior
+};
+
 export function parseCommitData(commits: CommitInfo[]): CommitInfo[] {
-  return commits.map(commit => ({
-    ...commit,
-    CommitTime: commit.CommitTime || new Date().toISOString()
-  }));
+  return commits.map(commit => {
+    // Add sentiment score to each commit
+    const sentimentScore = analyzeSentiment(commit.CommitMessage);
+    
+    return {
+      ...commit,
+      CommitTime: commit.CommitTime || new Date().toISOString(),
+      SentimentScore: sentimentScore
+    };
+  });
 }
 
 export function getCommitterStats(commits: CommitInfo[]): CommitterStats[] {
-  const committerMap = new Map<string, CommitterStats>();
+  const committerMap = new Map<string, any>();
+  
+  // Track per-committer sentiment
+  const sentimentMap = new Map<string, number[]>();
 
   commits.forEach(commit => {
     // Use only email as the key
@@ -38,8 +56,15 @@ export function getCommitterStats(commits: CommitInfo[]): CommitterStats[] {
       earlyMorningCommits: 0,
       afterHoursCommits: 0,
       weekendCommits: 0,
+      weekdayCommits: 0,
       burnoutRiskScore: 0,
-      commitsByHour: Array(24).fill(0) // Initialize 24 hours with zeros
+      commitsByHour: Array(24).fill(0), // Initialize 24 hours with zeros
+      
+      // New sentiment and weekend stats
+      averageSentiment: 0,
+      positivePct: 0,
+      negativePct: 0,
+      weekendCommitPct: 0
     };
 
     const commitTime = new Date(commit.CommitTime);
@@ -65,21 +90,34 @@ export function getCommitterStats(commits: CommitInfo[]): CommitterStats[] {
       existingStats.afterHoursCommits += 1;
     }
     
-    // Weekend commits
+    // Update weekend vs weekday metrics
     if (isWeekendDay) {
       existingStats.weekendCommits += 1;
+    } else {
+      existingStats.weekdayCommits += 1;
+    }
+    
+    // Track sentiment scores for this committer
+    if (!sentimentMap.has(key)) {
+      sentimentMap.set(key, []);
+    }
+    if (commit.SentimentScore !== undefined) {
+      sentimentMap.get(key)?.push(commit.SentimentScore);
     }
 
     committerMap.set(key, existingStats);
   });
 
-  // Calculate burnout risk scores
+  // Calculate derived statistics
   const committerStats = Array.from(committerMap.values());
   committerStats.forEach(stats => {
-    // Calculate percentages
+    // Calculate burnout risk percentages
     const afterHoursPercent = (stats.afterHoursCommits / stats.totalCommits) * 100;
     const earlyMorningPercent = (stats.earlyMorningCommits / stats.totalCommits) * 100;
     const weekendPercent = (stats.weekendCommits / stats.totalCommits) * 100;
+    
+    // Weekend warrior percentage
+    stats.weekendCommitPct = Math.round(weekendPercent);
     
     // Weighted burnout risk score (scale of 0-100)
     // Early morning commits are weighted more heavily as they indicate extreme hours
@@ -88,9 +126,55 @@ export function getCommitterStats(commits: CommitInfo[]): CommitterStats[] {
       (earlyMorningPercent * 0.4) + 
       (weekendPercent * 0.2)
     ));
+    
+    // Calculate sentiment stats
+    const sentimentScores = sentimentMap.get(stats.email) || [];
+    if (sentimentScores.length > 0) {
+      // Average sentiment
+      stats.averageSentiment = sentimentScores.reduce((sum, score) => sum + score, 0) / sentimentScores.length;
+      
+      // Percentage of positive and negative commits
+      const positiveCommits = sentimentScores.filter(score => score > 0.1).length;
+      const negativeCommits = sentimentScores.filter(score => score < -0.1).length;
+      
+      stats.positivePct = Math.round((positiveCommits / sentimentScores.length) * 100);
+      stats.negativePct = Math.round((negativeCommits / sentimentScores.length) * 100);
+    } else {
+      stats.averageSentiment = 0;
+      stats.positivePct = 0;
+      stats.negativePct = 0;
+    }
   });
 
   return committerStats;
+}
+
+export function getWeekendWarriorLevel(weekendPct: number): {level: string; color: string; description: string} {
+  if (weekendPct <= WEEKEND_WARRIOR_THRESHOLDS.CASUAL) {
+    return {
+      level: 'casual',
+      color: 'rgb(148, 163, 184)', // slate-400
+      description: 'Rarely works on weekends'
+    };
+  } else if (weekendPct <= WEEKEND_WARRIOR_THRESHOLDS.MODERATE) {
+    return {
+      level: 'moderate',
+      color: 'rgb(110, 231, 183)', // green-300
+      description: 'Occasionally works on weekends'
+    };
+  } else if (weekendPct <= WEEKEND_WARRIOR_THRESHOLDS.DEDICATED) {
+    return {
+      level: 'dedicated',
+      color: 'rgb(253, 224, 71)', // yellow-300
+      description: 'Frequently works on weekends'
+    };
+  } else {
+    return {
+      level: 'warrior',
+      color: 'rgb(249, 115, 22)', // orange-500
+      description: 'True weekend warrior'
+    };
+  }
 }
 
 export function getBurnoutRiskLevel(score: number): BurnoutRiskLevel {
@@ -192,6 +276,38 @@ export function getCommitsByTimeframe(commits: CommitInfo[], timeframeType: 'wee
     label,
     count: countMap.get(index) || 0
   }));
+}
+
+// Get average sentiment score for each day in the range
+export function getSentimentTrend(commits: CommitInfo[]): { date: string; score: number }[] {
+  if (!commits.length) return [];
+  
+  // Group commits by day
+  const commitsByDay = new Map<string, number[]>();
+  
+  commits.forEach(commit => {
+    if (commit.SentimentScore === undefined) return;
+    
+    const date = new Date(commit.CommitTime);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    
+    if (!commitsByDay.has(dateStr)) {
+      commitsByDay.set(dateStr, []);
+    }
+    
+    commitsByDay.get(dateStr)?.push(commit.SentimentScore);
+  });
+  
+  // Calculate average sentiment for each day
+  const result: { date: string; score: number }[] = [];
+  
+  for (const [date, scores] of commitsByDay.entries()) {
+    const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    result.push({ date, score: avgScore });
+  }
+  
+  // Sort by date
+  return result.sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function searchCommitById(commits: CommitInfo[], searchTerm: string): CommitInfo | undefined {

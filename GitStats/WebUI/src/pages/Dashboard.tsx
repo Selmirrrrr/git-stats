@@ -5,6 +5,8 @@ import { CommitSearch } from '../components/CommitSearch';
 import { FileUploader } from '../components/FileUploader';
 import { BurnoutRiskCard } from '../components/BurnoutRiskCard';
 import { CommitHourHeatmap } from '../components/CommitHourHeatmap';
+import { WeekendWarriorsCard } from '../components/WeekendWarriorsCard';
+import { CommitSentimentCard } from '../components/CommitSentimentCard';
 import { useCommitData } from '../hooks/useCommitData';
 
 export const Dashboard = () => {
@@ -87,12 +89,27 @@ export const Dashboard = () => {
             <CommitSearch commits={commits} />
           </div>
           
-          {/* Burnout risk metrics - new section */}
+          {/* Sentiment analysis section */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-4">Commit Message Sentiment</h2>
+            <div className="grid grid-cols-1 gap-6">
+              <CommitSentimentCard 
+                commits={commits}
+                committerStats={committerStats}
+              />
+            </div>
+          </div>
+          
+          {/* Burnout risk metrics section */}
           <div className="mb-6">
             <h2 className="text-2xl font-bold mb-4">Work Pattern Analysis</h2>
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-6 mb-6">
               <CommitHourHeatmap commits={commits} />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <BurnoutRiskCard committerStats={committerStats} />
+              <WeekendWarriorsCard committerStats={committerStats} />
             </div>
           </div>
           
@@ -115,7 +132,7 @@ export const Dashboard = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <TopCommittersCard
                 committerStats={committerStats}
                 sortBy="totalAdditions"
@@ -128,13 +145,6 @@ export const Dashboard = () => {
                 sortBy="totalDeletions"
                 title="Top Committers (by Deletions)"
                 chartColor="rgba(255, 159, 64, 0.6)"
-              />
-              
-              <TopCommittersCard
-                committerStats={committerStats}
-                sortBy="weekendCommits"
-                title="Weekend Warriors"
-                chartColor="rgba(153, 102, 255, 0.6)"
               />
             </div>
           </div>
