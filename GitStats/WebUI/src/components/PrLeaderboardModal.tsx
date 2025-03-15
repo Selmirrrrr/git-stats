@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { PrAuthorStats, ReviewerStats, CommenterStats } from '../utils/pullRequestAnalyzer';
 
+// Common interface with properties that all stats types share
+interface CommonStats {
+  name: string;
+  [key: string]: any; // This allows for string indexing
+}
+
 interface PrLeaderboardModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -24,8 +30,11 @@ export const PrLeaderboardModal = ({
   
   // Sort data by the selected stat
   const sortedData = [...data].sort((a, b) => {
-    if (typeof a[sortBy] === 'number' && typeof b[sortBy] === 'number') {
-      return (b[sortBy] as number) - (a[sortBy] as number);
+    const aVal = (a as CommonStats)[sortBy];
+    const bVal = (b as CommonStats)[sortBy];
+    
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return bVal - aVal;
     }
     return 0; // Default no sorting
   });
@@ -33,7 +42,7 @@ export const PrLeaderboardModal = ({
   // Filter by search term if any
   const filteredData = searchTerm.trim() 
     ? sortedData.filter(item => 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+        (item as CommonStats).name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : sortedData;
   
@@ -43,16 +52,18 @@ export const PrLeaderboardModal = ({
   // Calculate total for the selected stat across all items
   let totalValue = 0;
   for (const item of data) {
-    if (typeof item[sortBy] === 'number') {
-      totalValue += item[sortBy] as number;
+    const val = (item as CommonStats)[sortBy];
+    if (typeof val === 'number') {
+      totalValue += val;
     }
   }
   
   // Calculate some basic statistics
   const totalItems = data.length;
   const activeItems = data.filter(item => {
-    if (typeof item[sortBy] === 'number') {
-      return (item[sortBy] as number) > 0;
+    const val = (item as CommonStats)[sortBy];
+    if (typeof val === 'number') {
+      return val > 0;
     }
     return false;
   }).length;
@@ -61,8 +72,9 @@ export const PrLeaderboardModal = ({
   let top20Percent = 0;
   const topContributorsCount = Math.ceil(data.length * 0.2); // Top 20% of contributors
   for (let i = 0; i < Math.min(topContributorsCount, sortedData.length); i++) {
-    if (typeof sortedData[i][sortBy] === 'number') {
-      top20Percent += sortedData[i][sortBy] as number;
+    const val = (sortedData[i] as CommonStats)[sortBy];
+    if (typeof val === 'number') {
+      top20Percent += val;
     }
   }
   
@@ -149,7 +161,7 @@ export const PrLeaderboardModal = ({
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {filteredData.map((item, index) => {
-                const value = typeof item[sortBy] === 'number' ? item[sortBy] as number : 0;
+                const value = typeof (item as CommonStats)[sortBy] === 'number' ? (item as CommonStats)[sortBy] as number : 0;
                 const percentage = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0';
                 
                 // Special handling for reviewer's approval ratio
@@ -158,9 +170,12 @@ export const PrLeaderboardModal = ({
                   : '';
                 
                 // Get approval rate (exists in both author and reviewer stats)
-                const approvalRate = typeof item['approvalRate'] === 'number' 
-                  ? (item['approvalRate'] as number).toFixed(1) + '%'
-                  : 'N/A';
+                let approvalRate = 'N/A';
+                if (dataType === 'author' && 'approvalRate' in item) {
+                  approvalRate = ((item as PrAuthorStats).approvalRate).toFixed(1) + '%';
+                } else if (dataType === 'reviewer' && 'approvalRate' in item) {
+                  approvalRate = ((item as ReviewerStats).approvalRate).toFixed(1) + '%';
+                }
                 
                 return (
                   <tr key={item.name + index} 

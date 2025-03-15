@@ -3,6 +3,7 @@ import {
   PullRequestInfo, 
   PrAuthorStats, 
   ReviewerStats, 
+  CommenterStats,
   RepositoryPrStats,
   ReviewActivityTrend 
 } from '../utils/pullRequestAnalyzer';
