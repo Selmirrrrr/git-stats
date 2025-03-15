@@ -159,12 +159,12 @@ export const PrDashboard = () => {
                 chartColor="rgba(255, 206, 86, 0.6)"
               />
               
-              <TopAuthorsCard
-                authors={topAuthors.filter(a => a.timeToMergeAvg > 0)}
-                title="Time to Merge Analysis"
-                metric="timeToMergeAvg"
-                metricLabel="Avg. Time to Merge (hours)"
-                chartColor="rgba(153, 102, 255, 0.6)"
+              <TopReviewersCard
+                reviewers={topReviewers}
+                title="Top Rejecters"
+                metric="rejectionsGiven"
+                metricLabel="Rejections"
+                chartColor="rgba(255, 99, 132, 0.6)"
               />
             </div>
           </div>
