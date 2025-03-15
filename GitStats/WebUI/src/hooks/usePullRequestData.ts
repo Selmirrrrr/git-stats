@@ -10,7 +10,9 @@ import {
   getPrAuthorStats, 
   getTopPrAuthors, 
   getReviewerStats, 
-  getTopReviewers, 
+  getTopReviewers,
+  getCommenterStats,
+  getTopCommenters, 
   getRepositoryPrStats,
   getPrActivityTrend,
   getTeamCollaborationScore,
@@ -24,6 +26,9 @@ interface PullRequestDataHook {
   topAuthors: PrAuthorStats[];
   reviewerStats: ReviewerStats[];
   topReviewers: ReviewerStats[];
+  commenterStats: CommenterStats[];
+  topCommenters: CommenterStats[];
+  topCommentsByLength: CommenterStats[];
   repositoryStats: RepositoryPrStats[];
   activityTrend: ReviewActivityTrend;
   teamCollaborationScore: number;
@@ -40,6 +45,9 @@ export function usePullRequestData(jsonPath?: string): PullRequestDataHook {
   const [topAuthors, setTopAuthors] = useState<PrAuthorStats[]>([]);
   const [reviewerStats, setReviewerStats] = useState<ReviewerStats[]>([]);
   const [topReviewers, setTopReviewers] = useState<ReviewerStats[]>([]);
+  const [commenterStats, setCommenterStats] = useState<CommenterStats[]>([]);
+  const [topCommenters, setTopCommenters] = useState<CommenterStats[]>([]);
+  const [topCommentsByLength, setTopCommentsByLength] = useState<CommenterStats[]>([]);
   const [repositoryStats, setRepositoryStats] = useState<RepositoryPrStats[]>([]);
   const [activityTrend, setActivityTrend] = useState<ReviewActivityTrend>({ dates: [], prCreated: [], prApproved: [], prRejected: [] });
   const [teamCollaborationScore, setTeamCollaborationScore] = useState<number>(0);
@@ -86,6 +94,16 @@ export function usePullRequestData(jsonPath?: string): PullRequestDataHook {
         // Get default top reviewers sorted by total reviews
         setTopReviewers(getTopReviewers(data, 5, 'totalReviews', false));
         
+        // Calculate commenter statistics
+        const commenterStatsData = getCommenterStats(data);
+        setCommenterStats(commenterStatsData);
+        
+        // Get top commenters by total number of comments
+        setTopCommenters(getTopCommenters(data, 5, 'totalComments', false));
+        
+        // Get top commenters by total length of comments
+        setTopCommentsByLength(getTopCommenters(data, 5, 'totalCommentLength', false));
+        
         setRepositoryStats(getRepositoryPrStats(data));
         
         setActivityTrend(getPrActivityTrend(data));
@@ -115,6 +133,9 @@ export function usePullRequestData(jsonPath?: string): PullRequestDataHook {
     topAuthors,
     reviewerStats,
     topReviewers,
+    commenterStats,
+    topCommenters,
+    topCommentsByLength,
     repositoryStats,
     activityTrend,
     teamCollaborationScore,

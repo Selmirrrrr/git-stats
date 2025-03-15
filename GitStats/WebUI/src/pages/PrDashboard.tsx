@@ -4,6 +4,7 @@ import { TeamScoreCard } from '../components/TeamScoreCard';
 import { PrActivityChart } from '../components/PrActivityChart';
 import { TopAuthorsCard } from '../components/TopAuthorsCard';
 import { TopReviewersCard } from '../components/TopReviewersCard';
+import { TopCommentersCard } from '../components/TopCommentersCard';
 import { BranchDistributionCard } from '../components/BranchDistributionCard';
 import { usePullRequestData } from '../hooks/usePullRequestData';
 
@@ -13,6 +14,8 @@ export const PrDashboard = () => {
     pullRequests, 
     topAuthors,
     topReviewers,
+    topCommenters,
+    topCommentsByLength,
     activityTrend,
     teamCollaborationScore,
     teamVelocityScore,
@@ -202,6 +205,28 @@ export const PrDashboard = () => {
                 metric="responseTimeAvg"
                 metricLabel="Avg. Response Time (hours)"
                 chartColor="rgba(255, 159, 64, 0.6)"
+              />
+            </div>
+          </div>
+          
+          {/* Commenter Analysis */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-4">Comment Analysis</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TopCommentersCard
+                commenters={topCommenters}
+                title="Top Commenters"
+                metric="totalComments"
+                metricLabel="Total Comments"
+                chartColor="rgba(153, 102, 255, 0.6)"
+              />
+              
+              <TopCommentersCard
+                commenters={topCommentsByLength}
+                title="Top Commenters by Content Length"
+                metric="totalCommentLength"
+                metricLabel="Total Characters"
+                chartColor="rgba(255, 205, 86, 0.6)"
               />
             </div>
           </div>

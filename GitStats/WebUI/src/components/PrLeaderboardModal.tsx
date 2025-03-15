@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { PrAuthorStats, ReviewerStats } from '../utils/pullRequestAnalyzer';
+import { PrAuthorStats, ReviewerStats, CommenterStats } from '../utils/pullRequestAnalyzer';
 
 interface PrLeaderboardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: PrAuthorStats[] | ReviewerStats[];
+  data: PrAuthorStats[] | ReviewerStats[] | CommenterStats[];
   sortBy: string;
   title: string;
-  dataType: 'author' | 'reviewer';
+  dataType: 'author' | 'reviewer' | 'commenter';
 }
 
 export const PrLeaderboardModal = ({
@@ -134,6 +134,11 @@ export const PrLeaderboardModal = ({
                     Approval/Rejection
                   </th>
                 )}
+                {dataType === 'commenter' && (
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Avg. Comment Length
+                  </th>
+                )}
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   {statLabel}
                 </th>
@@ -176,6 +181,11 @@ export const PrLeaderboardModal = ({
                         {approvalRatio} ({approvalRate})
                       </td>
                     )}
+                    {dataType === 'commenter' && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right">
+                        {(item as CommenterStats).averageCommentLength.toFixed(1)} chars
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right">
                       {formatValue(value, sortBy)}
                     </td>
@@ -206,7 +216,7 @@ export const PrLeaderboardModal = ({
 };
 
 // Helper function to get a human-readable label for the sort criteria
-function getSortByLabel(sortBy: string, dataType: 'author' | 'reviewer'): string {
+function getSortByLabel(sortBy: string, dataType: 'author' | 'reviewer' | 'commenter'): string {
   if (dataType === 'author') {
     switch (sortBy) {
       case 'totalPRs':
@@ -224,7 +234,7 @@ function getSortByLabel(sortBy: string, dataType: 'author' | 'reviewer'): string
       default:
         return String(sortBy);
     }
-  } else {
+  } else if (dataType === 'reviewer') {
     switch (sortBy) {
       case 'totalReviews':
         return 'Reviews';
@@ -239,6 +249,17 @@ function getSortByLabel(sortBy: string, dataType: 'author' | 'reviewer'): string
       default:
         return String(sortBy);
     }
+  } else { // commenter
+    switch (sortBy) {
+      case 'totalComments':
+        return 'Comments';
+      case 'totalCommentLength':
+        return 'Total Characters';
+      case 'averageCommentLength':
+        return 'Avg Comment Length';
+      default:
+        return String(sortBy);
+    }
   }
 }
 
@@ -248,6 +269,16 @@ function formatValue(value: number, sortBy: string): string {
     return value.toFixed(1) + '%';
   } else if (sortBy.includes('Time') || sortBy.includes('Avg')) {
     return value.toFixed(1) + (sortBy.includes('Time') ? ' hours' : '');
+  } else if (sortBy === 'totalCommentLength') {
+    // Format character counts nicely with suffixes
+    if (value > 1000000) {
+      return (value / 1000000).toFixed(1) + 'M chars';
+    } else if (value > 1000) {
+      return (value / 1000).toFixed(1) + 'k chars';
+    }
+    return value.toLocaleString() + ' chars';
+  } else if (sortBy === 'averageCommentLength') {
+    return value.toFixed(1) + ' chars';
   }
   return value.toLocaleString();
 }

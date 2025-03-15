@@ -40,6 +40,14 @@ export interface ReviewerStats {
   reviewsByRepo: Record<string, number>;
 }
 
+export interface CommenterStats {
+  name: string;
+  totalComments: number;
+  totalCommentLength: number;
+  averageCommentLength: number;
+  commentsByRepo: Record<string, number>;
+}
+
 export interface RepositoryPrStats {
   name: string;
   totalPRs: number;
@@ -274,6 +282,87 @@ export function getTopReviewers(
       
       // Fall back to totalReviews if the metric is not comparable
       return ascending ? a.totalReviews - b.totalReviews : b.totalReviews - a.totalReviews;
+    })
+    .slice(0, limit);
+}
+
+/**
+ * Group PRs by commenter and calculate statistics about comments
+ */
+export function getCommenterStats(pullRequests: PullRequestInfo[]): CommenterStats[] {
+  const commenterMap = new Map<string, CommenterStats>();
+  
+  // Loop through all PRs and their messages
+  for (const pr of pullRequests) {
+    for (const message of pr.Messages) {
+      const commenter = message.Author;
+      
+      // Skip empty commenter names
+      if (!commenter || commenter.trim() === '') {
+        continue;
+      }
+      
+      if (!commenterMap.has(commenter)) {
+        commenterMap.set(commenter, {
+          name: commenter,
+          totalComments: 0,
+          totalCommentLength: 0,
+          averageCommentLength: 0,
+          commentsByRepo: {}
+        });
+      }
+      
+      const stats = commenterMap.get(commenter)!;
+      stats.totalComments += 1;
+      
+      // Calculate comment length
+      const commentLength = message.Message ? message.Message.length : 0;
+      stats.totalCommentLength += commentLength;
+      
+      // Update average
+      stats.averageCommentLength = stats.totalCommentLength / stats.totalComments;
+      
+      // Track comments by repository
+      if (!stats.commentsByRepo[pr.RepositoryName]) {
+        stats.commentsByRepo[pr.RepositoryName] = 0;
+      }
+      stats.commentsByRepo[pr.RepositoryName] += 1;
+    }
+  }
+  
+  return Array.from(commenterMap.values());
+}
+
+/**
+ * Get top commenters by a specific metric
+ */
+export function getTopCommenters(
+  pullRequests: PullRequestInfo[], 
+  limit = 5,
+  metric: keyof CommenterStats = 'totalComments',
+  ascending = false
+): CommenterStats[] {
+  const stats = getCommenterStats(pullRequests);
+  
+  return [...stats]
+    .sort((a, b) => {
+      // Handle numeric values
+      if (typeof a[metric] === 'number' && typeof b[metric] === 'number') {
+        return ascending 
+          ? (a[metric] as number) - (b[metric] as number)
+          : (b[metric] as number) - (a[metric] as number);
+      }
+      
+      // Handle object values (e.g., commentsByRepo)
+      if (typeof a[metric] === 'object' && !Array.isArray(a[metric]) &&
+          typeof b[metric] === 'object' && !Array.isArray(b[metric])) {
+        const aCount = Object.keys(a[metric] as object).length;
+        const bCount = Object.keys(b[metric] as object).length;
+        return ascending ? aCount - bCount : bCount - aCount;
+      }
+      
+      // Fall back to totalComments if the metric is not comparable
+      return ascending ? a.totalComments - b.totalComments : b.totalComments - a.totalComments;
     })
     .slice(0, limit);
 }
