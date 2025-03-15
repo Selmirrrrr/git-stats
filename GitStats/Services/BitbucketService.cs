@@ -84,18 +84,35 @@ namespace GitStats.Services
                     var jsonResponse = JObject.Parse(response);
                     var values = jsonResponse["values"] as JArray;
                     
-                    // Check if we have more results
-                    hasMore = jsonResponse["isLastPage"] != null && !(bool)jsonResponse["isLastPage"];
-                    if (hasMore)
+                    // Check if we have more results using safe conversion
+                    if (jsonResponse["isLastPage"] != null)
+                    {
+                        hasMore = !(bool)jsonResponse["isLastPage"];
+                    }
+                    else
+                    {
+                        hasMore = false; // Default to false if isLastPage is null
+                    }
+                    
+                    if (hasMore && jsonResponse["nextPageStart"] != null)
                     {
                         start = (int)jsonResponse["nextPageStart"];
+                    }
+                    else if (hasMore)
+                    {
+                        hasMore = false; // Can't continue without a valid next page
                     }
                     
                     if (values != null)
                     {
                         foreach (var pr in values)
                         {
-                            // Parse PR creation date
+                            // Parse PR creation date with null check
+                            if (pr["createdDate"] == null)
+                            {
+                                continue; // Skip this PR if createdDate is missing
+                            }
+                            
                             var createdDate = DateTimeOffset.FromUnixTimeMilliseconds((long)pr["createdDate"]).DateTime;
                             
                             // Skip if outside date range
@@ -176,6 +193,12 @@ namespace GitStats.Services
                             var comment = activity["comment"];
                             if (comment != null)
                             {
+                                // Check if createdDate exists
+                                if (activity["createdDate"] == null)
+                                {
+                                    continue; // Skip this comment if date is missing
+                                }
+                                
                                 var messageDate = DateTimeOffset.FromUnixTimeMilliseconds((long)activity["createdDate"]).DateTime;
                                 
                                 prInfo.Messages.Add(new PullRequestMessage

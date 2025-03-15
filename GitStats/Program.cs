@@ -46,6 +46,12 @@ namespace GitStats
             
             var gitService = new GitRepositoryService();
             
+            // Null check for BaseFolder
+            if (parser.BaseFolder == null)
+            {
+                throw new ArgumentNullException(nameof(parser.BaseFolder), "Base folder path cannot be null");
+            }
+            
             // Process repositories
             var commits = await gitService.GetCommitsFromRepositoriesAsync(
                 parser.BaseFolder, 
@@ -54,9 +60,21 @@ namespace GitStats
             
             Console.WriteLine($"Found {commits.Count} commits across all repositories");
             
+            // Null check for OutputJsonPath
+            if (parser.OutputJsonPath == null)
+            {
+                throw new ArgumentNullException(nameof(parser.OutputJsonPath), "JSON output path cannot be null");
+            }
+            
             // Export to JSON
             await exportService.ExportToJsonAsync(commits, parser.OutputJsonPath);
             Console.WriteLine($"JSON data exported to: {parser.OutputJsonPath}");
+            
+            // Null check for OutputCsvPath
+            if (parser.OutputCsvPath == null)
+            {
+                throw new ArgumentNullException(nameof(parser.OutputCsvPath), "CSV output path cannot be null");
+            }
             
             // Export to CSV
             await exportService.ExportToCsvAsync(commits, parser.OutputCsvPath);
@@ -69,11 +87,33 @@ namespace GitStats
             Console.WriteLine($"Date range: {parser.StartDate:yyyy-MM-dd} to {parser.EndDate:yyyy-MM-dd}");
             Console.WriteLine($"Connecting to Bitbucket server: {parser.BitbucketUrl}");
             
+            // Null checks for Bitbucket parameters
+            if (parser.BitbucketUrl == null)
+            {
+                throw new ArgumentNullException(nameof(parser.BitbucketUrl), "Bitbucket URL cannot be null");
+            }
+            
+            if (parser.BitbucketUsername == null)
+            {
+                throw new ArgumentNullException(nameof(parser.BitbucketUsername), "Bitbucket username cannot be null");
+            }
+            
+            if (parser.BitbucketPassword == null)
+            {
+                throw new ArgumentNullException(nameof(parser.BitbucketPassword), "Bitbucket password cannot be null");
+            }
+            
             var bitbucketService = new BitbucketService(
                 parser.BitbucketUrl,
                 parser.BitbucketUsername,
                 parser.BitbucketPassword
             );
+            
+            // Null check for project
+            if (parser.BitbucketProject == null)
+            {
+                throw new ArgumentNullException(nameof(parser.BitbucketProject), "Bitbucket project key cannot be null");
+            }
             
             // Get all PRs for the project
             var pullRequests = await bitbucketService.GetAllPullRequestsForProjectAsync(
@@ -83,6 +123,12 @@ namespace GitStats
             );
             
             Console.WriteLine($"Found {pullRequests.Count} pull requests in date range for project {parser.BitbucketProject}");
+            
+            // Null check for BitbucketPrJsonPath
+            if (parser.BitbucketPrJsonPath == null)
+            {
+                throw new ArgumentNullException(nameof(parser.BitbucketPrJsonPath), "PR JSON output path cannot be null");
+            }
             
             // Export PRs to JSON
             await exportService.ExportToJsonAsync(pullRequests, parser.BitbucketPrJsonPath);
