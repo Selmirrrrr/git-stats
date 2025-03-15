@@ -10,6 +10,58 @@ export interface CommitInfo {
   SentimentScore?: number;  // Added sentiment score for each commit
 }
 
+// Pull request related interfaces
+export interface PullRequestMessage {
+  Author: string;
+  Message: string;
+  Date: string;
+}
+
+export interface PullRequestInfo {
+  Author: string;
+  RepositoryName: string;
+  ProjectName: string;
+  IncomingBranchName: string;
+  DestinationBranchName: string;
+  Validators: string[];
+  Rejecters: string[];
+  Date: string;
+  Messages: PullRequestMessage[];
+}
+
+export interface PrAuthorStats {
+  name: string;
+  totalPRs: number;
+  approvalRate: number;
+  rejectionRate: number;
+  averageReviewers: number;
+  responseTimeAvg: number; // Average time to first response in hours
+  timeToMergeAvg: number;  // Average time from creation to validation in hours
+  repositoryContributions: Record<string, number>; // PRs by repo
+}
+
+export interface ReviewerStats {
+  name: string;
+  totalReviews: number;
+  approvalsGiven: number;
+  rejectionsGiven: number;
+  approvalRate: number;
+  responseTimeAvg: number; // Average time to review in hours
+  reviewsByRepo: Record<string, number>; // Reviews by repo
+}
+
+export interface RepositoryPrStats {
+  name: string;
+  totalPRs: number;
+  averageReviewers: number;
+  approvalRate: number;
+  averageComments: number;
+  timeToMergeAvg: number; // Average time to merge in hours
+  mostActiveAuthors: string[]; // Top 5 authors by PR count
+  mostActiveReviewers: string[]; // Top 5 reviewers by review count
+  mergeTargets: Record<string, number>; // Count of PRs by destination branch
+}
+
 export interface CommitterStats {
   name: string;
   email: string;
@@ -47,4 +99,11 @@ export interface SentimentCategory {
 export interface CommitSentimentTrend {
   dates: string[];
   scores: number[];
+}
+
+export interface ReviewActivityTrend {
+  dates: string[];
+  prCreated: number[];
+  prApproved: number[];
+  prRejected: number[];
 }
