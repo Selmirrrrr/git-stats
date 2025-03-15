@@ -10,6 +10,7 @@ export interface CommitInfo {
   SentimentScore?: number;  // Added sentiment score for each commit
   IsPotentialCodeMove?: boolean; // Flag to indicate if this commit likely just moves code
   CodeMoveRatio?: number; // Ratio of lines moved vs. added/deleted (0-1)
+  IsMergeCommit?: boolean; // Flag to indicate if this is a merge commit
 }
 
 // Pull request related interfaces

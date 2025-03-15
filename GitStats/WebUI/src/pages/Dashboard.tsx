@@ -15,6 +15,7 @@ export const Dashboard = () => {
   const [jsonPath, setJsonPath] = useState<string | undefined>();
   const { 
     commits, 
+    rawCommits,
     committerStats, 
     loading, 
     error,
@@ -39,6 +40,10 @@ export const Dashboard = () => {
   // Calculate totals
   const totalAdditions = commits.reduce((sum, commit) => sum + commit.Additions, 0);
   const totalDeletions = commits.reduce((sum, commit) => sum + commit.Deletions, 0);
+  
+  // Count merge commits in total and filtered data
+  const totalMergeCommits = rawCommits.filter(commit => commit.IsMergeCommit).length;
+  const filteredMergeCommits = commits.filter(commit => commit.IsMergeCommit).length;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -84,7 +89,7 @@ export const Dashboard = () => {
         
           <div className="mb-6">
             <h2 className="text-2xl font-bold mb-4">Repository Overview</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="card text-center">
                 <div className="text-4xl font-bold">{commits.length}</div>
                 <div className="text-gray-500">Total Commits</div>
@@ -104,6 +109,18 @@ export const Dashboard = () => {
               <div className="card text-center">
                 <div className="text-4xl font-bold">{committerStats.length}</div>
                 <div className="text-gray-500">Contributors</div>
+              </div>
+              <div className="card text-center">
+                <div className="text-4xl font-bold">{totalMergeCommits}</div>
+                <div className="text-gray-500">Merge Commits</div>
+                {totalMergeCommits > 0 && (
+                  <div className="text-xs mt-1 text-gray-400">
+                    {filterSettings.excludeMergeCommits 
+                      ? `(${totalMergeCommits - filteredMergeCommits} filtered out)` 
+                      : `(shown in stats)`
+                    }
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { parseCommitData, getCommitterStats, filterExtremeCommits } from '../uti
 // Default filter settings
 const DEFAULT_FILTER_SETTINGS = {
   excludeCodeMoves: true,
+  excludeMergeCommits: true, // Enable merge commit filtering by default
   moveRatio: 0.8
 };
 
@@ -62,6 +63,7 @@ export function useCommitData(filePath?: string) {
 
   return {
     commits,
+    rawCommits, // Export the raw commits for additional stats
     committerStats,
     loading,
     error,

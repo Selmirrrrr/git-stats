@@ -27,6 +27,23 @@ const WEEKEND_WARRIOR_THRESHOLDS = {
   // Above 40%: Weekend warrior
 };
 
+/**
+ * Determines if a commit is a merge commit based on the commit message
+ */
+function isMergeCommit(message: string): boolean {
+  // Common patterns for merge commits
+  const mergePatterns = [
+    /^merge(?:\s+(?:branch|pull\s+request|tag|remote))?\s+['\"]?[\w\-./]+['\"]?(?:\s+(?:into|to|with)\s+['\"]?[\w\-./]+['\"]?)?/i,
+    /^Merge pull request #\d+/i,
+    /^Merged in \w+/i,
+    /^Merged \w+ into \w+/i,
+    /^Automatic merge/i
+  ];
+  
+  // Check if the commit message matches any merge pattern
+  return mergePatterns.some(pattern => pattern.test(message));
+}
+
 export function parseCommitData(commits: CommitInfo[]): CommitInfo[] {
   return commits.map(commit => {
     // Add sentiment score to each commit
@@ -41,12 +58,18 @@ export function parseCommitData(commits: CommitInfo[]): CommitInfo[] {
       isPotentialCodeMove = isCodeMoveCommit(commit.Additions, commit.Deletions, codeMoveRatio);
     }
     
+    // Detect if this is a merge commit
+    const isMerge = commit.IsMergeCommit !== undefined 
+      ? commit.IsMergeCommit 
+      : isMergeCommit(commit.CommitMessage);
+    
     return {
       ...commit,
       CommitTime: commit.CommitTime || new Date().toISOString(),
       SentimentScore: sentimentScore,
       IsPotentialCodeMove: isPotentialCodeMove,
-      CodeMoveRatio: codeMoveRatio
+      CodeMoveRatio: codeMoveRatio,
+      IsMergeCommit: isMerge
     };
   });
 }
@@ -81,30 +104,42 @@ export function filterExtremeCommits(
   commits: CommitInfo[], 
   options: { 
     excludeCodeMoves: boolean;
+    excludeMergeCommits?: boolean;
     moveRatio?: number;
   }
 ): CommitInfo[] {
-  if (!options.excludeCodeMoves) {
+  // No filtering necessary if both options are off
+  if (!options.excludeCodeMoves && !options.excludeMergeCommits) {
     return commits;
   }
   
   const ratio = options.moveRatio || DEFAULT_CODE_MOVE_SETTINGS.MOVE_RATIO;
   
   return commits.filter(commit => {
-    // If already tagged by backend, use that value
-    if (commit.IsPotentialCodeMove !== undefined) {
-      // Recalculate only if ratio is custom
-      if (options.moveRatio !== undefined) {
-        const moveRatio = commit.CodeMoveRatio || calculateCodeMoveRatio(commit.Additions, commit.Deletions);
-        return moveRatio < ratio;
-      }
-      
-      return !commit.IsPotentialCodeMove;
+    // First check for merge commits if that filter is enabled
+    if (options.excludeMergeCommits && commit.IsMergeCommit) {
+      return false; // Filter out merge commits
     }
     
-    // Otherwise calculate here
-    const moveRatio = commit.CodeMoveRatio || calculateCodeMoveRatio(commit.Additions, commit.Deletions);
-    return moveRatio < ratio;
+    // Then check for code moves if that filter is enabled
+    if (options.excludeCodeMoves) {
+      // If already tagged by backend, use that value
+      if (commit.IsPotentialCodeMove !== undefined) {
+        // Recalculate only if ratio is custom
+        if (options.moveRatio !== undefined) {
+          const moveRatio = commit.CodeMoveRatio || calculateCodeMoveRatio(commit.Additions, commit.Deletions);
+          return moveRatio < ratio;
+        }
+        return !commit.IsPotentialCodeMove;
+      }
+      
+      // Otherwise calculate here
+      const moveRatio = commit.CodeMoveRatio || calculateCodeMoveRatio(commit.Additions, commit.Deletions);
+      return moveRatio < ratio;
+    }
+    
+    // If we get here, the commit passed all active filters
+    return true;
   });
 }
 

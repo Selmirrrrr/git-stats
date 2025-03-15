@@ -3,6 +3,7 @@ import React from 'react';
 interface CommitFiltersProps {
   filterSettings: {
     excludeCodeMoves: boolean;
+    excludeMergeCommits: boolean;
     moveRatio: number;
   };
   setFilterSettings: (settings: any) => void;
@@ -18,11 +19,18 @@ export const CommitFilters: React.FC<CommitFiltersProps> = ({
   filteredCommits,
   excludedCommits
 }) => {
-  // Handle checkbox change
-  const handleExcludeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle checkbox changes
+  const handleExcludeCodeMovesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterSettings({
       ...filterSettings,
       excludeCodeMoves: e.target.checked
+    });
+  };
+  
+  const handleExcludeMergeCommitsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterSettings({
+      ...filterSettings,
+      excludeMergeCommits: e.target.checked
     });
   };
 
@@ -57,7 +65,7 @@ export const CommitFilters: React.FC<CommitFiltersProps> = ({
             type="checkbox"
             id="excludeCodeMoves"
             checked={filterSettings.excludeCodeMoves}
-            onChange={handleExcludeChange}
+            onChange={handleExcludeCodeMovesChange}
             className="mr-2"
           />
           <label htmlFor="excludeCodeMoves" className="text-sm font-medium">
@@ -65,6 +73,22 @@ export const CommitFilters: React.FC<CommitFiltersProps> = ({
           </label>
           <div className="ml-2 text-xs text-gray-500">
             (commits that likely just move code around without adding real value)
+          </div>
+        </div>
+        
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="excludeMergeCommits"
+            checked={filterSettings.excludeMergeCommits}
+            onChange={handleExcludeMergeCommitsChange}
+            className="mr-2"
+          />
+          <label htmlFor="excludeMergeCommits" className="text-sm font-medium">
+            Exclude merge commits
+          </label>
+          <div className="ml-2 text-xs text-gray-500">
+            (commits that merge one branch into another, e.g., "Merge branch 'feature' into 'main'")
           </div>
         </div>
 
