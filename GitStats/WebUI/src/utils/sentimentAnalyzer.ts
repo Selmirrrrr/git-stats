@@ -1,9 +1,9 @@
 /**
- * A simple sentiment analyzer for commit messages
+ * A simple sentiment analyzer for commit messages in English and French
  */
 
-// Positive words commonly found in commit messages
-const POSITIVE_WORDS = [
+// Positive words commonly found in English commit messages
+const POSITIVE_WORDS_EN = [
   'add', 'improve', 'enhance', 'optimize', 'fix', 'resolve', 'solved', 'support',
   'feature', 'clean', 'simplify', 'upgrade', 'refactor', 'better', 'faster', 
   'easier', 'simplified', 'nice', 'good', 'great', 'awesome', 'amazing', 
@@ -11,20 +11,43 @@ const POSITIVE_WORDS = [
   'done', 'finish', 'finished', 'working', 'works', 'perfect', 'updated'
 ];
 
-// Negative words commonly found in commit messages
-const NEGATIVE_WORDS = [
+// Positive words commonly found in French commit messages
+const POSITIVE_WORDS_FR = [
+  'ajouter', 'ajout', 'améliorer', 'amélioration', 'optimiser', 'optimisation', 'corriger', 
+  'correction', 'réparer', 'réparation', 'résoudre', 'résolu', 'fonctionnalité', 'nettoyer',
+  'nettoyage', 'simplifier', 'simplification', 'mettre à jour', 'mise à jour', 'mise à niveau',
+  'refactoriser', 'refactorisation', 'meilleur', 'mieux', 'plus rapide', 'plus facile', 'simplifié',
+  'bien', 'bon', 'super', 'génial', 'excellent', 'implémentation', 'implémenter', 'réussi', 'réussite',
+  'complet', 'complété', 'terminé', 'fini', 'fonctionnel', 'fonctionne', 'parfait'
+];
+
+// Negative words commonly found in English commit messages
+const NEGATIVE_WORDS_EN = [
   'bug', 'issue', 'error', 'fail', 'failed', 'failure', 'crash', 'fix', 'problem',
   'broken', 'breaking', 'critical', 'severe', 'bad', 'wrong', 'terrible', 'horrible',
   'nasty', 'ugly', 'hack', 'workaround', 'temporary', 'temp', 'revert', 'rollback',
   'emergency', 'hotfix', 'regression', 'disaster', 'wtf', 'corrupted', 'invalid'
 ];
 
+// Negative words commonly found in French commit messages
+const NEGATIVE_WORDS_FR = [
+  'bogue', 'bug', 'problème', 'erreur', 'échec', 'échoué', 'plantage', 'planter', 'crash',
+  'panne', 'cassé', 'casse', 'critique', 'grave', 'sévère', 'mauvais', 'incorrect', 'faux',
+  'terrible', 'horrible', 'vilain', 'bidouille', 'contournement', 'temporaire', 'provisoire',
+  'annuler', 'revenir', 'retour', 'urgence', 'urgent', 'régression', 'désastre', 'catastrophe',
+  'corrompu', 'invalide', 'défaut', 'défectueux'
+];
+
+// Combined word lists for easier processing
+const POSITIVE_WORDS = [...POSITIVE_WORDS_EN, ...POSITIVE_WORDS_FR];
+const NEGATIVE_WORDS = [...NEGATIVE_WORDS_EN, ...NEGATIVE_WORDS_FR];
+
 // Emoticons and emojis
 const POSITIVE_EMOJIS = ['😀', '😊', '👍', '🎉', '✅', '🚀', '💯', '👏', '🙌', '💪', '✨'];
 const NEGATIVE_EMOJIS = ['😞', '😢', '😡', '👎', '❌', '💔', '😱', '😰', '🤦', '🤮', '🔥'];
 
 /**
- * Analyzes the sentiment of a commit message
+ * Analyzes the sentiment of a commit message in English or French
  * 
  * @param message - The commit message to analyze
  * @returns A score between -1 (very negative) and 1 (very positive)
@@ -38,33 +61,55 @@ export function analyzeSentiment(message: string): number {
   
   // Count positive words
   for (const word of POSITIVE_WORDS) {
-    const regex = new RegExp(`\\b${word}\\b`, 'gi');
-    const matches = lowerMessage.match(regex);
-    if (matches) {
-      // Special case: "fix" is both positive and negative
-      // We consider it positive when in the context of "fixed" or "fixing"
-      if (word === 'fix') {
-        score += matches.length * 0.5; // Lower weight for "fix"
-      } else {
-        score += matches.length;
+    // For multi-word phrases in French (e.g., "mise à jour")
+    if (word.includes(' ')) {
+      const phraseCount = countOccurrences(lowerMessage, word);
+      score += phraseCount;
+      wordCount += phraseCount;
+    } else {
+      const regex = new RegExp(`\\b${escapeRegExp(word)}\\b`, 'gi');
+      const matches = lowerMessage.match(regex);
+      if (matches) {
+        // Special cases with different weights
+        if (word === 'fix' || word === 'corriger') {
+          score += matches.length * 0.5; // Lower weight for "fix"/"corriger"
+        } else {
+          score += matches.length;
+        }
+        wordCount += matches.length;
       }
-      wordCount += matches.length;
     }
   }
   
   // Count negative words
   for (const word of NEGATIVE_WORDS) {
-    const regex = new RegExp(`\\b${word}\\b`, 'gi');
-    const matches = lowerMessage.match(regex);
-    if (matches) {
-      // Special case: "fix" is both positive and negative
-      // We consider it negative when not in the context of "fixed" or "fixing"
-      if (word === 'fix' && !lowerMessage.includes('fixed') && !lowerMessage.includes('fixing')) {
-        score -= matches.length * 0.8; // Higher weight for negative "fix"
-      } else if (word !== 'fix') {
-        score -= matches.length;
+    // For multi-word phrases in French
+    if (word.includes(' ')) {
+      const phraseCount = countOccurrences(lowerMessage, word);
+      score -= phraseCount;
+      wordCount += phraseCount;
+    } else {
+      const regex = new RegExp(`\\b${escapeRegExp(word)}\\b`, 'gi');
+      const matches = lowerMessage.match(regex);
+      if (matches) {
+        // Special cases with different weights
+        // English "fix" special case
+        if (word === 'fix' && 
+           !lowerMessage.includes('fixed') && 
+           !lowerMessage.includes('fixing')) {
+          score -= matches.length * 0.8; // Higher weight for negative "fix"
+        } 
+        // French "corriger" special case
+        else if (word === 'corriger' && 
+                !lowerMessage.includes('corrigé') && 
+                !lowerMessage.includes('correction')) {
+          score -= matches.length * 0.8; // Higher weight for negative "corriger"
+        }
+        else if (word !== 'fix' && word !== 'corriger') {
+          score -= matches.length;
+        }
+        wordCount += matches.length;
       }
-      wordCount += matches.length;
     }
   }
   
@@ -87,6 +132,28 @@ export function analyzeSentiment(message: string): number {
   }
   
   return 0; // Neutral if no sentiment words found
+}
+
+/**
+ * Count occurrences of a phrase in a text
+ */
+function countOccurrences(text: string, phrase: string): number {
+  let count = 0;
+  let pos = text.indexOf(phrase);
+  
+  while (pos !== -1) {
+    count++;
+    pos = text.indexOf(phrase, pos + 1);
+  }
+  
+  return count;
+}
+
+/**
+ * Escape special characters for use in regular expressions
+ */
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
