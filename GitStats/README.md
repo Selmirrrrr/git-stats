@@ -101,6 +101,24 @@ dotnet run --mode bitbucket-pr --bitbucket-url <url> --bitbucket-username <usern
 dotnet run --mode bitbucket-pr --bitbucket-url https://bitbucket.example.com --bitbucket-username user --bitbucket-password pass --bitbucket-project PROJECT_KEY --start-date 2024-01-01 --end-date 2024-03-01 --output-pr-json prs.json
 ```
 
+#### Complete Workflow Example
+
+This example demonstrates a complete workflow for analyzing both Git commits and Bitbucket PRs:
+
+```bash
+# Step 1: Extract commit data from local repositories
+dotnet run --folder /path/to/repositories --start-date 2024-01-01 --end-date 2024-03-31 --output-json commits.json
+
+# Step 2: Extract PR data from Bitbucket for the same time period
+dotnet run --mode bitbucket-pr --bitbucket-url https://bitbucket.example.com --bitbucket-username user --bitbucket-password pass --bitbucket-project PROJECT_KEY --start-date 2024-01-01 --end-date 2024-03-31 --output-pr-json prs.json
+
+# Step 3: Start the web dashboard for visualization
+cd WebUI
+npm run dev
+
+# Step 4: Open http://localhost:3000 in your browser and upload both JSON files
+```
+
 ### Running the Web Dashboard
 
 ```
@@ -187,6 +205,14 @@ The web dashboard provides various visualizations and insights:
    - Weekend warrior detection
    - Commit hour heatmap
    - Sentiment analysis of commit messages
+
+6. **Pull Request Analytics**:
+   - PR activity trends over time
+   - Top PR authors and most active contributors
+   - Top reviewers and review activity distribution
+   - Team collaboration and velocity scores
+   - Branch usage patterns and distribution
+   - Repository PR statistics comparison
 
 ## Limitations
 
