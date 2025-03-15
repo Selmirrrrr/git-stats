@@ -132,12 +132,36 @@ export function getPrAuthorStats(pullRequests: PullRequestInfo[]): PrAuthorStats
 }
 
 /**
- * Get top authors by number of PRs
+ * Get top authors by a specific metric
  */
-export function getTopPrAuthors(pullRequests: PullRequestInfo[], limit = 5): PrAuthorStats[] {
+export function getTopPrAuthors(
+  pullRequests: PullRequestInfo[], 
+  limit = 5, 
+  metric: keyof PrAuthorStats = 'totalPRs',
+  ascending = false
+): PrAuthorStats[] {
   const stats = getPrAuthorStats(pullRequests);
-  return stats
-    .sort((a, b) => b.totalPRs - a.totalPRs)
+  
+  return [...stats]
+    .sort((a, b) => {
+      // Handle numeric values
+      if (typeof a[metric] === 'number' && typeof b[metric] === 'number') {
+        return ascending 
+          ? (a[metric] as number) - (b[metric] as number)
+          : (b[metric] as number) - (a[metric] as number);
+      }
+      
+      // Handle object values (e.g., repositoryContributions)
+      if (typeof a[metric] === 'object' && !Array.isArray(a[metric]) &&
+          typeof b[metric] === 'object' && !Array.isArray(b[metric])) {
+        const aCount = Object.keys(a[metric] as object).length;
+        const bCount = Object.keys(b[metric] as object).length;
+        return ascending ? aCount - bCount : bCount - aCount;
+      }
+      
+      // Fall back to totalPRs if the metric is not comparable
+      return ascending ? a.totalPRs - b.totalPRs : b.totalPRs - a.totalPRs;
+    })
     .slice(0, limit);
 }
 
@@ -221,12 +245,36 @@ export function getReviewerStats(pullRequests: PullRequestInfo[]): ReviewerStats
 }
 
 /**
- * Get top reviewers by number of reviews
+ * Get top reviewers by a specific metric
  */
-export function getTopReviewers(pullRequests: PullRequestInfo[], limit = 5): ReviewerStats[] {
+export function getTopReviewers(
+  pullRequests: PullRequestInfo[], 
+  limit = 5,
+  metric: keyof ReviewerStats = 'totalReviews',
+  ascending = false
+): ReviewerStats[] {
   const stats = getReviewerStats(pullRequests);
-  return stats
-    .sort((a, b) => b.totalReviews - a.totalReviews)
+  
+  return [...stats]
+    .sort((a, b) => {
+      // Handle numeric values
+      if (typeof a[metric] === 'number' && typeof b[metric] === 'number') {
+        return ascending 
+          ? (a[metric] as number) - (b[metric] as number)
+          : (b[metric] as number) - (a[metric] as number);
+      }
+      
+      // Handle object values (e.g., reviewsByRepo)
+      if (typeof a[metric] === 'object' && !Array.isArray(a[metric]) &&
+          typeof b[metric] === 'object' && !Array.isArray(b[metric])) {
+        const aCount = Object.keys(a[metric] as object).length;
+        const bCount = Object.keys(b[metric] as object).length;
+        return ascending ? aCount - bCount : bCount - aCount;
+      }
+      
+      // Fall back to totalReviews if the metric is not comparable
+      return ascending ? a.totalReviews - b.totalReviews : b.totalReviews - a.totalReviews;
+    })
     .slice(0, limit);
 }
 

@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { PrAuthorStats } from '../utils/pullRequestAnalyzer';
 import { Bar } from 'react-chartjs-2';
+import { PrLeaderboardModal } from './PrLeaderboardModal';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -110,9 +112,20 @@ export const TopAuthorsCard = ({
     }
   };
   
+  // Add state for the leaderboard modal
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <button 
+          onClick={() => setShowLeaderboard(true)}
+          className="text-xs text-blue-600 hover:text-blue-800"
+        >
+          View Full Leaderboard
+        </button>
+      </div>
       
       <div className="h-64">
         <Bar data={chartData} options={options} id={`authors-chart-${title.replace(/\s+/g, '-').toLowerCase()}`} />
@@ -165,6 +178,18 @@ export const TopAuthorsCard = ({
           </tbody>
         </table>
       </div>
+      
+      {/* Leaderboard Modal */}
+      {showLeaderboard && (
+        <PrLeaderboardModal
+          isOpen={showLeaderboard}
+          onClose={() => setShowLeaderboard(false)}
+          data={authors}
+          sortBy={metric}
+          title={title}
+          dataType="author"
+        />
+      )}
     </div>
   );
 };

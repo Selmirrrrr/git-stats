@@ -77,12 +77,14 @@ export function usePullRequestData(jsonPath?: string): PullRequestDataHook {
         const authorStatsData = getPrAuthorStats(data);
         setAuthorStats(authorStatsData);
         
-        setTopAuthors(getTopPrAuthors(data, 5));
+        // Get default top authors sorted by total PRs
+        setTopAuthors(getTopPrAuthors(data, 5, 'totalPRs', false));
         
         const reviewerStatsData = getReviewerStats(data);
         setReviewerStats(reviewerStatsData);
         
-        setTopReviewers(getTopReviewers(data, 5));
+        // Get default top reviewers sorted by total reviews
+        setTopReviewers(getTopReviewers(data, 5, 'totalReviews', false));
         
         setRepositoryStats(getRepositoryPrStats(data));
         
