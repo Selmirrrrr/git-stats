@@ -46,13 +46,16 @@ export const TopReviewersCard = ({
     );
   }
   
+  // Limit displayed reviewers in chart to top 10 for better visibility
+  const displayedReviewers = [...reviewers].slice(0, 10);
+  
   // Prepare chart data
   const chartData = {
-    labels: reviewers.map(reviewer => reviewer.name.split('@')[0]), // Use name or first part of email
+    labels: displayedReviewers.map(reviewer => reviewer.name.split('@')[0]), // Use name or first part of email
     datasets: [
       {
         label: metricLabel,
-        data: reviewers.map(reviewer => {
+        data: displayedReviewers.map(reviewer => {
           const value = reviewer[metric];
           // Handle different metric types
           if (typeof value === 'number') {
@@ -132,6 +135,11 @@ export const TopReviewersCard = ({
       </div>
       
       <div className="mt-4 overflow-y-auto max-h-64">
+        {reviewers.length > 10 && (
+          <div className="text-xs text-gray-500 mb-2">
+            Showing top 10 of {reviewers.length} reviewers. View the full leaderboard for complete data.
+          </div>
+        )}
         <table className="w-full text-sm">
           <thead className="text-left border-b">
             <tr>
@@ -141,7 +149,7 @@ export const TopReviewersCard = ({
             </tr>
           </thead>
           <tbody>
-            {reviewers.map((reviewer) => {
+            {displayedReviewers.map((reviewer) => {
               const metricValue = reviewer[metric];
               let displayValue = '';
               

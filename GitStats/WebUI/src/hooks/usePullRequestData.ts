@@ -86,24 +86,24 @@ export function usePullRequestData(jsonPath?: string): PullRequestDataHook {
         const authorStatsData = getPrAuthorStats(data);
         setAuthorStats(authorStatsData);
         
-        // Get default top authors sorted by total PRs
-        setTopAuthors(getTopPrAuthors(data, 5, 'totalPRs', false));
+        // Get all authors sorted by total PRs (no limit)
+        setTopAuthors(getTopPrAuthors(data, Number.MAX_SAFE_INTEGER, 'totalPRs', false));
         
         const reviewerStatsData = getReviewerStats(data);
         setReviewerStats(reviewerStatsData);
         
-        // Get default top reviewers sorted by total reviews
-        setTopReviewers(getTopReviewers(data, 5, 'totalReviews', false));
+        // Get all reviewers sorted by total reviews (no limit)
+        setTopReviewers(getTopReviewers(data, Number.MAX_SAFE_INTEGER, 'totalReviews', false));
         
         // Calculate commenter statistics
         const commenterStatsData = getCommenterStats(data);
         setCommenterStats(commenterStatsData);
         
-        // Get top commenters by total number of comments
-        setTopCommenters(getTopCommenters(data, 5, 'totalComments', false));
+        // Get all commenters by total number of comments (no limit)
+        setTopCommenters(getTopCommenters(data, Number.MAX_SAFE_INTEGER, 'totalComments', false));
         
-        // Get top commenters by total length of comments
-        setTopCommentsByLength(getTopCommenters(data, 5, 'totalCommentLength', false));
+        // Get all commenters by total length of comments (no limit)
+        setTopCommentsByLength(getTopCommenters(data, Number.MAX_SAFE_INTEGER, 'totalCommentLength', false));
         
         setRepositoryStats(getRepositoryPrStats(data));
         

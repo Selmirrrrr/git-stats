@@ -46,13 +46,16 @@ export const TopAuthorsCard = ({
     );
   }
   
+  // Limit displayed authors in chart to top 10 for better visibility
+  const displayedAuthors = [...authors].slice(0, 10);
+  
   // Prepare chart data
   const chartData = {
-    labels: authors.map(author => author.name.split('@')[0]), // Use name or first part of email
+    labels: displayedAuthors.map(author => author.name.split('@')[0]), // Use name or first part of email
     datasets: [
       {
         label: metricLabel,
-        data: authors.map(author => {
+        data: displayedAuthors.map(author => {
           const value = author[metric];
           // Handle different metric types
           if (typeof value === 'number') {
@@ -132,6 +135,11 @@ export const TopAuthorsCard = ({
       </div>
       
       <div className="mt-4 overflow-y-auto max-h-64">
+        {authors.length > 10 && (
+          <div className="text-xs text-gray-500 mb-2">
+            Showing top 10 of {authors.length} authors. View the full leaderboard for complete data.
+          </div>
+        )}
         <table className="w-full text-sm">
           <thead className="text-left border-b">
             <tr>
@@ -141,7 +149,7 @@ export const TopAuthorsCard = ({
             </tr>
           </thead>
           <tbody>
-            {authors.map((author) => {
+            {displayedAuthors.map((author) => {
               const metricValue = author[metric];
               let displayValue = '';
               
