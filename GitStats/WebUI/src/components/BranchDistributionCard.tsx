@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -26,6 +27,18 @@ export const BranchDistributionCard = ({
   description = '',
   height = 300 
 }: BranchDistributionCardProps) => {
+  const chartId = `branch-chart-${title.replace(/\s+/g, '-').toLowerCase()}`;
+  const chartRef = useRef<ChartJS | null>(null);
+  
+  // Cleanup function to destroy chart instance when component unmounts or updates
+  useEffect(() => {
+    return () => {
+      // Destroy the chart when component unmounts
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, [distributionData, title]);
   if (Object.keys(distributionData).length === 0) {
     return (
       <div className="card">
@@ -83,23 +96,31 @@ export const BranchDistributionCard = ({
     ],
   };
   
-  const options = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'right' as const,
         labels: {
+          // Simplified approach that doesn't cause recursion
           generateLabels: function(chart: any) {
-            // Get the default legend items
-            const original = chart.legend.options.labels.generateLabels(chart);
-            
-            // Add the count to each label
-            original.forEach((item: any, index: number) => {
-              item.text = `${item.text} (${data[index]})`;
-            });
-            
-            return original;
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              return data.labels.map((label: string, i: number) => {
+                const dataset = data.datasets[0];
+                const value = dataset.data[i];
+                return {
+                  text: `${label} (${value})`,
+                  fillStyle: dataset.backgroundColor[i],
+                  strokeStyle: dataset.borderColor[i],
+                  lineWidth: 1,
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
+            return [];
           }
         }
       },
@@ -122,7 +143,15 @@ export const BranchDistributionCard = ({
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
       
       <div style={{ height: `${height}px` }}>
-        <Doughnut data={chartData} options={options} id={`branch-chart-${title.replace(/\s+/g, '-').toLowerCase()}`} />
+        <Doughnut 
+          data={chartData} 
+          options={options} 
+          id={chartId}
+          ref={(ref: any) => {
+            // In react-chartjs-2 v4+, the chart instance is directly on the ref
+            chartRef.current = ref;
+          }}
+        />
       </div>
       
       {description && (
