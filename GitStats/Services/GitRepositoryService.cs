@@ -89,7 +89,8 @@ namespace GitStats.Services
                     Deletions = deletions,
                     RepositoryName = repoName,
                     IsPotentialCodeMove = isPotentialCodeMove,
-                    CodeMoveRatio = codeMoveRatio
+                    CodeMoveRatio = codeMoveRatio,
+                    IsMergeCommit = commit.Parents.Count() > 1
                 });
             }
 

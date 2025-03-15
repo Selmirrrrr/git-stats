@@ -45,11 +45,7 @@ namespace GitStats
             Console.WriteLine($"Date range: {parser.StartDate:yyyy-MM-dd} to {parser.EndDate:yyyy-MM-dd}");
             
             // Create GitRepositoryService with filtering options
-            var gitService = new GitRepositoryService(
-                extremeCommitLineThreshold: parser.ExtremeCommitLineThreshold,
-                moveCodeRatio: parser.MoveCodeRatio,
-                excludeExtremeMoves: parser.ExcludeExtremeMoves
-            );
+            var gitService = new GitRepositoryService(parser.MoveCodeRatio);
             
             if (parser.ExcludeExtremeMoves)
             {
