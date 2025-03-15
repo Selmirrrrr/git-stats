@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { CommitInfo, CommitterStats } from '../types';
+import { CommitInfo } from '../types';
 import { parseCommitData, getCommitterStats, filterExtremeCommits } from '../utils/commitAnalyzer';
 
 // Default filter settings
