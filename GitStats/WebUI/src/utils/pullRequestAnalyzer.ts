@@ -1,5 +1,63 @@
-import { PullRequestInfo, PrAuthorStats, ReviewerStats, RepositoryPrStats, ReviewActivityTrend } from '../types';
 import { format, parseISO, differenceInHours, differenceInDays, isSameDay, addDays, startOfDay } from 'date-fns';
+
+// Define interfaces that were missing from types
+export interface PullRequestMessage {
+  Author: string;
+  Message: string;
+  Date: string;
+}
+
+export interface PullRequestInfo {
+  Author: string;
+  RepositoryName: string;
+  ProjectName: string;
+  IncomingBranchName: string;
+  DestinationBranchName: string;
+  Validators: string[];
+  Rejecters: string[];
+  Date: string;
+  Messages: PullRequestMessage[];
+}
+
+export interface PrAuthorStats {
+  name: string;
+  totalPRs: number;
+  approvalRate: number;
+  rejectionRate: number;
+  averageReviewers: number;
+  responseTimeAvg: number;
+  timeToMergeAvg: number;
+  repositoryContributions: Record<string, number>;
+}
+
+export interface ReviewerStats {
+  name: string;
+  totalReviews: number;
+  approvalsGiven: number;
+  rejectionsGiven: number;
+  approvalRate: number;
+  responseTimeAvg: number;
+  reviewsByRepo: Record<string, number>;
+}
+
+export interface RepositoryPrStats {
+  name: string;
+  totalPRs: number;
+  averageReviewers: number;
+  approvalRate: number;
+  averageComments: number;
+  timeToMergeAvg: number;
+  mostActiveAuthors: string[];
+  mostActiveReviewers: string[];
+  mergeTargets: Record<string, number>;
+}
+
+export interface ReviewActivityTrend {
+  dates: string[];
+  prCreated: number[];
+  prApproved: number[];
+  prRejected: number[];
+}
 
 /**
  * Group PRs by author and calculate statistics for each
@@ -257,15 +315,15 @@ export function getRepositoryPrStats(pullRequests: PullRequestInfo[]): Repositor
     
     // Get most active authors
     stats.mostActiveAuthors = Array.from(authorsMap.entries())
-      .sort((a, b) => b[1] - a[1])
+      .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
       .slice(0, 5)
-      .map(entry => entry[0]);
+      .map((entry: [string, number]) => entry[0]);
     
     // Get most active reviewers
     stats.mostActiveReviewers = Array.from(reviewersMap.entries())
-      .sort((a, b) => b[1] - a[1])
+      .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
       .slice(0, 5)
-      .map(entry => entry[0]);
+      .map((entry: [string, number]) => entry[0]);
   }
   
   return Array.from(repoMap.values());

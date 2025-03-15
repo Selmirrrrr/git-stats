@@ -1,4 +1,4 @@
-import { PrAuthorStats } from '../types';
+import { PrAuthorStats } from '../utils/pullRequestAnalyzer';
 import { Bar } from 'react-chartjs-2';
 
 interface TopAuthorsCardProps {
@@ -49,7 +49,7 @@ export const TopAuthorsCard = ({
     ]
   };
   
-  const options = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -78,7 +78,7 @@ export const TopAuthorsCard = ({
           text: metricLabel
         },
         ticks: {
-          callback: function(value: number) {
+          callback: function(value: any) {
             if (metric === 'approvalRate' || metric === 'rejectionRate') {
               return value + '%';
             } else if (metric === 'responseTimeAvg' || metric === 'timeToMergeAvg') {

@@ -1,4 +1,4 @@
-import { ReviewerStats } from '../types';
+import { ReviewerStats } from '../utils/pullRequestAnalyzer';
 import { Bar } from 'react-chartjs-2';
 
 interface TopReviewersCardProps {
@@ -49,7 +49,7 @@ export const TopReviewersCard = ({
     ]
   };
   
-  const options = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -78,7 +78,7 @@ export const TopReviewersCard = ({
           text: metricLabel
         },
         ticks: {
-          callback: function(value: number) {
+          callback: function(value: any) {
             if (metric === 'approvalRate') {
               return value + '%';
             } else if (metric === 'responseTimeAvg') {

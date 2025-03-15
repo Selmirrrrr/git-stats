@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
-import { PullRequestInfo, PrAuthorStats, ReviewerStats, RepositoryPrStats, ReviewActivityTrend } from '../types';
+import { 
+  PullRequestInfo, 
+  PrAuthorStats, 
+  ReviewerStats, 
+  RepositoryPrStats,
+  ReviewActivityTrend 
+} from '../utils/pullRequestAnalyzer';
 import { 
   getPrAuthorStats, 
   getTopPrAuthors, 

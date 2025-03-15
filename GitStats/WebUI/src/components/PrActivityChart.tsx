@@ -1,5 +1,5 @@
 import { Line } from 'react-chartjs-2';
-import { ReviewActivityTrend } from '../types';
+import { ReviewActivityTrend } from '../utils/pullRequestAnalyzer';
 
 interface PrActivityChartProps {
   activityData: ReviewActivityTrend;
