@@ -56,7 +56,7 @@ namespace GitStats.Services
                     {
                         if (repo["slug"] != null)
                         {
-                            repositories.Add(repo["slug"].ToString());
+                            repositories.Add(repo["slug"]!.ToString());
                         }
                     }
                 }
@@ -94,7 +94,8 @@ namespace GitStats.Services
                     // Check if we have more results using safe conversion
                     if (jsonResponse["isLastPage"] != null)
                     {
-                        hasMore = !(bool)jsonResponse["isLastPage"];
+                        var isLastPage = jsonResponse["isLastPage"];
+                        hasMore = isLastPage != null && !(bool)isLastPage;
                     }
                     else
                     {
@@ -103,7 +104,11 @@ namespace GitStats.Services
                     
                     if (hasMore && jsonResponse["nextPageStart"] != null)
                     {
-                        start = (int)jsonResponse["nextPageStart"];
+                        var nextPageStart = jsonResponse["nextPageStart"];
+                        if (nextPageStart != null)
+                        {
+                            start = (int)nextPageStart;
+                        }
                     }
                     else if (hasMore)
                     {
@@ -120,7 +125,12 @@ namespace GitStats.Services
                                 continue; // Skip this PR if createdDate is missing
                             }
                             
-                            var createdDate = DateTimeOffset.FromUnixTimeMilliseconds((long)pr["createdDate"]).DateTime;
+                            var createdDateToken = pr["createdDate"];
+                            if (createdDateToken == null)
+                            {
+                                continue; // Skip if null
+                            }
+                            var createdDate = DateTimeOffset.FromUnixTimeMilliseconds((long)createdDateToken).DateTime;
                             
                             // Skip if outside date range
                             if (createdDate < startDate || createdDate > endDate)
@@ -146,7 +156,11 @@ namespace GitStats.Services
                                     bool approved = false;
                                     if (reviewer["approved"] != null)
                                     {
-                                        approved = (bool)reviewer["approved"];
+                                        var approvedToken = reviewer["approved"];
+                                        if (approvedToken != null)
+                                        {
+                                            approved = (bool)approvedToken;
+                                        }
                                     }
                                     var reviewerName = reviewer["user"]?["displayName"]?.ToString() ?? "Unknown Reviewer";
                                     
@@ -162,7 +176,11 @@ namespace GitStats.Services
                             }
                             
                             // Get PR comments/messages
-                            await GetPullRequestCommentsAsync(projectKey, repositorySlug, (int)pr["id"], prInfo);
+                            var idToken = pr["id"];
+                            if (idToken != null)
+                            {
+                                await GetPullRequestCommentsAsync(projectKey, repositorySlug, (int)idToken, prInfo);
+                            }
                             
                             pullRequests.Add(prInfo);
                         }
@@ -206,7 +224,12 @@ namespace GitStats.Services
                                     continue; // Skip this comment if date is missing
                                 }
                                 
-                                var messageDate = DateTimeOffset.FromUnixTimeMilliseconds((long)activity["createdDate"]).DateTime;
+                                var createdDateToken = activity["createdDate"];
+                                if (createdDateToken == null)
+                                {
+                                    continue; // Skip if null
+                                }
+                                var messageDate = DateTimeOffset.FromUnixTimeMilliseconds((long)createdDateToken).DateTime;
                                 
                                 prInfo.Messages.Add(new PullRequestMessage
                                 {
