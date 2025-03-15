@@ -1,5 +1,24 @@
 import { PrAuthorStats } from '../utils/pullRequestAnalyzer';
 import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface TopAuthorsCardProps {
   authors: PrAuthorStats[];
@@ -96,7 +115,7 @@ export const TopAuthorsCard = ({
       <h3 className="text-lg font-semibold mb-4">{title}</h3>
       
       <div className="h-64">
-        <Bar data={chartData} options={options} />
+        <Bar data={chartData} options={options} id={`authors-chart-${title.replace(/\s+/g, '-').toLowerCase()}`} />
       </div>
       
       <div className="mt-4 overflow-y-auto max-h-64">

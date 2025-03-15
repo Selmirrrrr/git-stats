@@ -1,5 +1,28 @@
 import { Line } from 'react-chartjs-2';
 import { ReviewActivityTrend } from '../utils/pullRequestAnalyzer';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 interface PrActivityChartProps {
   activityData: ReviewActivityTrend;
@@ -72,7 +95,7 @@ export const PrActivityChart = ({ activityData, height = 300 }: PrActivityChartP
   return (
     <div style={{ height: `${height}px` }} className="card">
       <h3 className="text-lg font-semibold mb-4">Pull Request Activity Over Time</h3>
-      <Line data={data} options={options} />
+      <Line data={data} options={options} id="pr-activity-chart" />
       <div className="mt-3 text-sm text-gray-500">
         This chart shows the trend of pull request activity over time, including creation, approval, and rejection rates.
       </div>

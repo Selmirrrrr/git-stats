@@ -1,4 +1,17 @@
 import { Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register ChartJS components
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend
+);
 
 interface BranchDistributionCardProps {
   distributionData: Record<string, number>;
@@ -109,7 +122,7 @@ export const BranchDistributionCard = ({
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
       
       <div style={{ height: `${height}px` }}>
-        <Doughnut data={chartData} options={options} />
+        <Doughnut data={chartData} options={options} id={`branch-chart-${title.replace(/\s+/g, '-').toLowerCase()}`} />
       </div>
       
       {description && (
