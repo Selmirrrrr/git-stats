@@ -4,7 +4,6 @@ import { analyzeSentiment } from './sentimentAnalyzer';
 
 // Define thresholds for code move detection (if not provided by backend)
 const DEFAULT_CODE_MOVE_SETTINGS = {
-  EXTREME_THRESHOLD: 500, // Line threshold for considering a commit extreme
   MOVE_RATIO: 0.8,        // Ratio threshold for detecting code moves
 };
 
@@ -67,8 +66,8 @@ function calculateCodeMoveRatio(additions: number, deletions: number): number {
  * Determines if a commit is likely just moving code around without adding real value
  */
 function isCodeMoveCommit(additions: number, deletions: number, ratio: number): boolean {
-  // If the commit is small, it's not considered an extreme commit regardless of ratios
-  if (additions + deletions < DEFAULT_CODE_MOVE_SETTINGS.EXTREME_THRESHOLD) return false;
+  // Must have at least some changes to be a code move
+  if (additions === 0 || deletions === 0) return false;
   
   // If the ratio is above our threshold, it's likely a code move
   return ratio >= DEFAULT_CODE_MOVE_SETTINGS.MOVE_RATIO;
@@ -82,7 +81,6 @@ export function filterExtremeCommits(
   commits: CommitInfo[], 
   options: { 
     excludeCodeMoves: boolean;
-    extremeThreshold?: number;
     moveRatio?: number;
   }
 ): CommitInfo[] {
@@ -90,19 +88,13 @@ export function filterExtremeCommits(
     return commits;
   }
   
-  const threshold = options.extremeThreshold || DEFAULT_CODE_MOVE_SETTINGS.EXTREME_THRESHOLD;
   const ratio = options.moveRatio || DEFAULT_CODE_MOVE_SETTINGS.MOVE_RATIO;
   
   return commits.filter(commit => {
     // If already tagged by backend, use that value
     if (commit.IsPotentialCodeMove !== undefined) {
-      // Recalculate only if thresholds are custom
-      if (options.extremeThreshold !== undefined || options.moveRatio !== undefined) {
-        const totalLines = commit.Additions + commit.Deletions;
-        // Skip this check if the commit is below threshold
-        if (totalLines < threshold) return true;
-        
-        // Otherwise check with custom ratio
+      // Recalculate only if ratio is custom
+      if (options.moveRatio !== undefined) {
         const moveRatio = commit.CodeMoveRatio || calculateCodeMoveRatio(commit.Additions, commit.Deletions);
         return moveRatio < ratio;
       }
@@ -111,10 +103,6 @@ export function filterExtremeCommits(
     }
     
     // Otherwise calculate here
-    const totalLines = commit.Additions + commit.Deletions;
-    // Skip small commits from filtering (always include them)
-    if (totalLines < threshold) return true;
-    
     const moveRatio = commit.CodeMoveRatio || calculateCodeMoveRatio(commit.Additions, commit.Deletions);
     return moveRatio < ratio;
   });

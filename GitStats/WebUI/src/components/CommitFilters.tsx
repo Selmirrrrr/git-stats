@@ -3,7 +3,6 @@ import React from 'react';
 interface CommitFiltersProps {
   filterSettings: {
     excludeCodeMoves: boolean;
-    extremeThreshold: number;
     moveRatio: number;
   };
   setFilterSettings: (settings: any) => void;
@@ -24,14 +23,6 @@ export const CommitFilters: React.FC<CommitFiltersProps> = ({
     setFilterSettings({
       ...filterSettings,
       excludeCodeMoves: e.target.checked
-    });
-  };
-
-  // Handle threshold slider change
-  const handleThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilterSettings({
-      ...filterSettings,
-      extremeThreshold: parseInt(e.target.value)
     });
   };
 
@@ -77,51 +68,34 @@ export const CommitFilters: React.FC<CommitFiltersProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <label htmlFor="extremeThreshold" className="text-sm font-medium">
-                Line Threshold: {filterSettings.extremeThreshold} lines
-              </label>
-            </div>
-            <input
-              type="range"
-              id="extremeThreshold"
-              min="100"
-              max="2000"
-              step="100"
-              value={filterSettings.extremeThreshold}
-              onChange={handleThresholdChange}
-              disabled={!filterSettings.excludeCodeMoves}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>100</span>
-              <span>2000</span>
+        <div className="space-y-2 mt-4">
+          <div className="flex justify-between">
+            <label htmlFor="moveRatio" className="text-sm font-medium">
+              Move Ratio: {filterSettings.moveRatio.toFixed(1)}
+            </label>
+            <div className="text-xs text-gray-500 italic">
+              Higher values mean stricter filtering
             </div>
           </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <label htmlFor="moveRatio" className="text-sm font-medium">
-                Move Ratio: {filterSettings.moveRatio.toFixed(1)}
-              </label>
-            </div>
-            <input
-              type="range"
-              id="moveRatio"
-              min="0.5"
-              max="1.0"
-              step="0.1"
-              value={filterSettings.moveRatio}
-              onChange={handleRatioChange}
-              disabled={!filterSettings.excludeCodeMoves}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>0.5</span>
-              <span>1.0</span>
-            </div>
+          <input
+            type="range"
+            id="moveRatio"
+            min="0.5"
+            max="1.0"
+            step="0.1"
+            value={filterSettings.moveRatio}
+            onChange={handleRatioChange}
+            disabled={!filterSettings.excludeCodeMoves}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>0.5 (Permissive)</span>
+            <span>1.0 (Strict)</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            Explanation: A ratio close to 1.0 means the commit has nearly equal additions and deletions,
+            suggesting code was mostly moved rather than substantively changed. A ratio of 0.8 means at least
+            80% of lines were likely just moved.
           </div>
         </div>
       </div>

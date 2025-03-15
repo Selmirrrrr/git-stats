@@ -173,7 +173,9 @@ This will start the development server, and you can access the dashboard at http
     "CommitMessage": "Fix login bug",
     "Additions": 15,
     "Deletions": 7,
-    "RepositoryName": "repo1"
+    "RepositoryName": "repo1",
+    "IsPotentialCodeMove": false,
+    "CodeMoveRatio": 0.47
   },
   ...
 ]
@@ -244,6 +246,11 @@ The web dashboard provides various visualizations and insights:
    - Team collaboration and velocity scores
    - Branch usage patterns and distribution
    - Repository PR statistics comparison
+
+7. **Advanced Filtering**:
+   - Exclude commits that just move code around without adding real value
+   - Adjustable "Move Ratio" to fine-tune filtering sensitivity
+   - Real-time filtering without re-running data extraction
 
 ## How to Use with GitHub Pages
 

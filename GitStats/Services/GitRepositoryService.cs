@@ -11,24 +11,13 @@ namespace GitStats.Services
     public class GitRepositoryService
     {
         // Configuration for commit filtering
-        private readonly int _extremeCommitLineThreshold = 500; // Threshold for considering a commit as potentially "extreme"
         private readonly double _moveCodeRatio = 0.8; // If deleted lines are X% of added lines, it's likely just moving code
-        private readonly bool _excludeExtremeMoves = true; // Whether to exclude extreme commits that are mostly code moves
         
         // Constructor with default values
-        public GitRepositoryService(
-            int? extremeCommitLineThreshold = null,
-            double? moveCodeRatio = null,
-            bool? excludeExtremeMoves = null)
+        public GitRepositoryService(double? moveCodeRatio = null)
         {
-            if (extremeCommitLineThreshold.HasValue)
-                _extremeCommitLineThreshold = extremeCommitLineThreshold.Value;
-            
             if (moveCodeRatio.HasValue)
                 _moveCodeRatio = moveCodeRatio.Value;
-                
-            if (excludeExtremeMoves.HasValue)
-                _excludeExtremeMoves = excludeExtremeMoves.Value;
         }
         
         public async Task<List<CommitInfo>> GetCommitsFromRepositoriesAsync(string baseFolder, DateTime startDate, DateTime endDate)
@@ -125,8 +114,8 @@ namespace GitStats.Services
         /// </summary>
         private bool IsCodeMoveCommit(int additions, int deletions, double ratio)
         {
-            // If the commit is small, it's not considered an extreme commit regardless of ratios
-            if (additions + deletions < _extremeCommitLineThreshold)
+            // Must have both additions and deletions to be a move
+            if (additions == 0 || deletions == 0)
                 return false;
                 
             // If the ratio is above our threshold, it's likely a code move

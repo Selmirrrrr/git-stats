@@ -5,7 +5,6 @@ import { parseCommitData, getCommitterStats, filterExtremeCommits } from '../uti
 // Default filter settings
 const DEFAULT_FILTER_SETTINGS = {
   excludeCodeMoves: true,
-  extremeThreshold: 500,
   moveRatio: 0.8
 };
 
