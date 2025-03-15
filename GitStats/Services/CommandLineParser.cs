@@ -16,6 +16,8 @@ namespace GitStats.Services
         public string? BitbucketUrl { get; private set; }
         public string? BitbucketUsername { get; private set; }
         public string? BitbucketPassword { get; private set; }
+        public string? BitbucketApiKey { get; private set; }
+        public bool UsesBitbucketApiKey { get; private set; }
         public string? BitbucketProject { get; private set; }
         public string? BitbucketPrJsonPath { get; private set; }
 
@@ -116,17 +118,33 @@ namespace GitStats.Services
                 Environment.Exit(1);
             }
             
-            if (!argDict.ContainsKey("bitbucket-username") || !argDict.ContainsKey("bitbucket-password"))
+            // Check for either username/password OR API key authentication
+            bool hasApiKey = argDict.ContainsKey("bitbucket-api-key");
+            bool hasCredentials = argDict.ContainsKey("bitbucket-username") && argDict.ContainsKey("bitbucket-password");
+            
+            if (!hasApiKey && !hasCredentials)
             {
-                Console.WriteLine("Error: Bitbucket credentials are required for bitbucket-pr mode.");
+                Console.WriteLine("Error: Either Bitbucket API key or username/password credentials are required.");
+                Console.WriteLine("Use --bitbucket-api-key for API key authentication (recommended)");
+                Console.WriteLine("Or use both --bitbucket-username and --bitbucket-password for basic authentication");
                 ShowHelp();
                 Environment.Exit(1);
             }
             
             // Parse Bitbucket parameters
             BitbucketUrl = argDict["bitbucket-url"];
-            BitbucketUsername = argDict["bitbucket-username"];
-            BitbucketPassword = argDict["bitbucket-password"];
+            
+            // Determine which authentication method to use
+            if (hasApiKey)
+            {
+                UsesBitbucketApiKey = true;
+                BitbucketApiKey = argDict["bitbucket-api-key"];
+            }
+            else
+            {
+                BitbucketUsername = argDict["bitbucket-username"];
+                BitbucketPassword = argDict["bitbucket-password"];
+            }
             BitbucketProject = argDict["bitbucket-project"];
             
             // Parse common date parameters
@@ -177,19 +195,26 @@ namespace GitStats.Services
             Console.WriteLine("GitStats - Extract statistics from Git repositories and Bitbucket PRs");
             Console.WriteLine("\nUsage for Git Commits Mode:");
             Console.WriteLine("  GitStats --folder <path> [--start-date <yyyy-MM-dd>] [--end-date <yyyy-MM-dd>] [--output-json <file.json>] [--output-csv <file.csv>]");
-            Console.WriteLine("\nUsage for Bitbucket PR Mode:");
+            Console.WriteLine("\nUsage for Bitbucket PR Mode (API Key authentication - recommended):");
+            Console.WriteLine("  GitStats --mode bitbucket-pr --bitbucket-url <url> --bitbucket-api-key <api-key> --bitbucket-project <project-key> [--start-date <yyyy-MM-dd>] [--end-date <yyyy-MM-dd>] [--output-pr-json <file.json>]");
+            
+            Console.WriteLine("\nUsage for Bitbucket PR Mode (Username/Password authentication - legacy):");
             Console.WriteLine("  GitStats --mode bitbucket-pr --bitbucket-url <url> --bitbucket-username <username> --bitbucket-password <password> --bitbucket-project <project-key> [--start-date <yyyy-MM-dd>] [--end-date <yyyy-MM-dd>] [--output-pr-json <file.json>]");
+            
             Console.WriteLine("\nCommon Options:");
             Console.WriteLine("  --start-date    Start date for data range (default: 30 days ago)");
             Console.WriteLine("  --end-date      End date for data range (default: today)");
+            
             Console.WriteLine("\nCommit Mode Options:");
             Console.WriteLine("  --folder        Base folder containing Git repositories");
             Console.WriteLine("  --output-json   Output JSON file path for commit data (default: git-stats.json)");
             Console.WriteLine("  --output-csv    Output CSV file path for commit data (default: git-stats.csv)");
+            
             Console.WriteLine("\nBitbucket PR Mode Options:");
             Console.WriteLine("  --bitbucket-url       Bitbucket server URL");
-            Console.WriteLine("  --bitbucket-username  Bitbucket username");
-            Console.WriteLine("  --bitbucket-password  Bitbucket password");
+            Console.WriteLine("  --bitbucket-api-key   Bitbucket API key for Bearer token authentication (recommended)");
+            Console.WriteLine("  --bitbucket-username  Bitbucket username (legacy basic auth)");
+            Console.WriteLine("  --bitbucket-password  Bitbucket password (legacy basic auth)");
             Console.WriteLine("  --bitbucket-project   Bitbucket project key");
             Console.WriteLine("  --output-pr-json      Output JSON file path for PR data (default: bitbucket-prs.json)");
         }

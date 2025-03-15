@@ -93,21 +93,45 @@ namespace GitStats
                 throw new ArgumentNullException(nameof(parser.BitbucketUrl), "Bitbucket URL cannot be null");
             }
             
-            if (parser.BitbucketUsername == null)
-            {
-                throw new ArgumentNullException(nameof(parser.BitbucketUsername), "Bitbucket username cannot be null");
-            }
+            BitbucketService bitbucketService;
             
-            if (parser.BitbucketPassword == null)
+            // Determine which authentication method to use
+            if (parser.UsesBitbucketApiKey)
             {
-                throw new ArgumentNullException(nameof(parser.BitbucketPassword), "Bitbucket password cannot be null");
+                if (parser.BitbucketApiKey == null)
+                {
+                    throw new ArgumentNullException(nameof(parser.BitbucketApiKey), "Bitbucket API key cannot be null");
+                }
+                
+                // Use API key authentication (recommended)
+                bitbucketService = new BitbucketService(
+                    parser.BitbucketUrl,
+                    parser.BitbucketApiKey
+                );
+                
+                Console.WriteLine("Using API key authentication for Bitbucket");
             }
-            
-            var bitbucketService = new BitbucketService(
-                parser.BitbucketUrl,
-                parser.BitbucketUsername,
-                parser.BitbucketPassword
-            );
+            else
+            {
+                // Use username/password authentication (legacy)
+                if (parser.BitbucketUsername == null)
+                {
+                    throw new ArgumentNullException(nameof(parser.BitbucketUsername), "Bitbucket username cannot be null");
+                }
+                
+                if (parser.BitbucketPassword == null)
+                {
+                    throw new ArgumentNullException(nameof(parser.BitbucketPassword), "Bitbucket password cannot be null");
+                }
+                
+                bitbucketService = new BitbucketService(
+                    parser.BitbucketUrl,
+                    parser.BitbucketUsername,
+                    parser.BitbucketPassword
+                );
+                
+                Console.WriteLine("Using username/password authentication for Bitbucket (legacy method)");
+            }
             
             // Null check for project
             if (parser.BitbucketProject == null)

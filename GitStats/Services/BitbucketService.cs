@@ -14,18 +14,25 @@ namespace GitStats.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _baseUrl;
-        private readonly string _username;
-        private readonly string _password;
 
+        // Constructor for API key authentication
+        public BitbucketService(string baseUrl, string apiKey)
+        {
+            _baseUrl = baseUrl.TrimEnd('/');
+            _httpClient = new HttpClient();
+            
+            // Set up Bearer token authentication with API key
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+        }
+        
+        // Constructor for username/password authentication (kept for backward compatibility)
         public BitbucketService(string baseUrl, string username, string password)
         {
             _baseUrl = baseUrl.TrimEnd('/');
-            _username = username;
-            _password = password;
             _httpClient = new HttpClient();
             
             // Set up basic authentication
-            var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{_username}:{_password}"));
+            var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{password}"));
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
         }
 
