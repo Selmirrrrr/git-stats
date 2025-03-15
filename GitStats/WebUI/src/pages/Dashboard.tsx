@@ -8,6 +8,7 @@ import { CommitHourHeatmap } from '../components/CommitHourHeatmap';
 import { WeekendWarriorsCard } from '../components/WeekendWarriorsCard';
 import { CommitSentimentCard } from '../components/CommitSentimentCard';
 import { CommitFilters } from '../components/CommitFilters';
+import { CommitListGrid } from '../components/CommitListGrid';
 import { useCommitData } from '../hooks/useCommitData';
 
 export const Dashboard = () => {
@@ -210,6 +211,12 @@ export const Dashboard = () => {
                 />
               </div>
             </div>
+          </div>
+          
+          {/* Commit List Grid */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-4">Commit List</h2>
+            <CommitListGrid commits={commits} />
           </div>
         </>
       )}
