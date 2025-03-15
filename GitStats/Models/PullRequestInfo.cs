@@ -5,11 +5,11 @@ namespace GitStats.Models
 {
     public class PullRequestInfo
     {
-        public string Author { get; set; }
-        public string RepositoryName { get; set; }
-        public string ProjectName { get; set; }
-        public string IncomingBranchName { get; set; }
-        public string DestinationBranchName { get; set; }
+        public required string Author { get; set; }
+        public required string RepositoryName { get; set; }
+        public required string ProjectName { get; set; }
+        public required string IncomingBranchName { get; set; }
+        public required string DestinationBranchName { get; set; }
         public List<string> Validators { get; set; } = new List<string>();
         public List<string> Rejecters { get; set; } = new List<string>();
         public DateTime Date { get; set; }
@@ -18,8 +18,8 @@ namespace GitStats.Models
 
     public class PullRequestMessage
     {
-        public string Author { get; set; }
-        public string Message { get; set; }
+        public required string Author { get; set; }
+        public required string Message { get; set; }
         public DateTime Date { get; set; }
     }
 }

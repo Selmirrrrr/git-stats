@@ -47,7 +47,10 @@ namespace GitStats.Services
                 {
                     foreach (var repo in values)
                     {
-                        repositories.Add(repo["slug"].ToString());
+                        if (repo["slug"] != null)
+                        {
+                            repositories.Add(repo["slug"].ToString());
+                        }
                     }
                 }
             }
@@ -103,12 +106,12 @@ namespace GitStats.Services
                             
                             var prInfo = new PullRequestInfo
                             {
-                                Author = pr["author"]["user"]["displayName"].ToString(),
+                                Author = pr["author"]?["user"]?["displayName"]?.ToString() ?? "Unknown",
                                 RepositoryName = repositorySlug,
                                 ProjectName = projectKey,
                                 Date = createdDate,
-                                IncomingBranchName = pr["fromRef"]["displayId"].ToString(),
-                                DestinationBranchName = pr["toRef"]["displayId"].ToString()
+                                IncomingBranchName = pr["fromRef"]?["displayId"]?.ToString() ?? "Unknown",
+                                DestinationBranchName = pr["toRef"]?["displayId"]?.ToString() ?? "Unknown"
                             };
                             
                             // Get reviewers info
@@ -116,8 +119,12 @@ namespace GitStats.Services
                             {
                                 foreach (var reviewer in reviewers)
                                 {
-                                    var approved = reviewer["approved"] != null && (bool)reviewer["approved"];
-                                    var reviewerName = reviewer["user"]["displayName"].ToString();
+                                    bool approved = false;
+                                    if (reviewer["approved"] != null)
+                                    {
+                                        approved = (bool)reviewer["approved"];
+                                    }
+                                    var reviewerName = reviewer["user"]?["displayName"]?.ToString() ?? "Unknown Reviewer";
                                     
                                     if (approved)
                                     {
@@ -173,8 +180,8 @@ namespace GitStats.Services
                                 
                                 prInfo.Messages.Add(new PullRequestMessage
                                 {
-                                    Author = activity["user"]["displayName"].ToString(),
-                                    Message = comment["text"].ToString(),
+                                    Author = activity["user"]?["displayName"]?.ToString() ?? "Unknown",
+                                    Message = comment["text"]?.ToString() ?? "No message content",
                                     Date = messageDate
                                 });
                             }

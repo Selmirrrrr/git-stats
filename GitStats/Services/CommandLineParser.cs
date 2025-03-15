@@ -5,19 +5,19 @@ namespace GitStats.Services
 {
     public class CommandLineParser
     {
-        public string BaseFolder { get; private set; }
+        public string? BaseFolder { get; private set; }
         public DateTime StartDate { get; private set; }
         public DateTime EndDate { get; private set; }
-        public string OutputJsonPath { get; private set; }
-        public string OutputCsvPath { get; private set; }
+        public string? OutputJsonPath { get; private set; }
+        public string? OutputCsvPath { get; private set; }
         
         // Bitbucket PR service parameters
         public bool UsesBitbucket { get; private set; }
-        public string BitbucketUrl { get; private set; }
-        public string BitbucketUsername { get; private set; }
-        public string BitbucketPassword { get; private set; }
-        public string BitbucketProject { get; private set; }
-        public string BitbucketPrJsonPath { get; private set; }
+        public string? BitbucketUrl { get; private set; }
+        public string? BitbucketUsername { get; private set; }
+        public string? BitbucketPassword { get; private set; }
+        public string? BitbucketProject { get; private set; }
+        public string? BitbucketPrJsonPath { get; private set; }
 
         public CommandLineParser(string[] args)
         {
@@ -88,11 +88,11 @@ namespace GitStats.Services
             ParseCommonDateParams(argDict);
             
             // Set output paths
-            OutputJsonPath = argDict.TryGetValue("output-json", out string jsonPath) 
+            OutputJsonPath = argDict.TryGetValue("output-json", out string? jsonPath) 
                 ? jsonPath 
                 : "git-stats.json";
 
-            OutputCsvPath = argDict.TryGetValue("output-csv", out string csvPath) 
+            OutputCsvPath = argDict.TryGetValue("output-csv", out string? csvPath) 
                 ? csvPath 
                 : "git-stats.csv";
         }
@@ -133,7 +133,7 @@ namespace GitStats.Services
             ParseCommonDateParams(argDict);
             
             // Set output paths for PR data
-            BitbucketPrJsonPath = argDict.TryGetValue("output-pr-json", out string prJsonPath) 
+            BitbucketPrJsonPath = argDict.TryGetValue("output-pr-json", out string? prJsonPath) 
                 ? prJsonPath 
                 : "bitbucket-prs.json";
         }
@@ -141,7 +141,7 @@ namespace GitStats.Services
         private void ParseCommonDateParams(Dictionary<string, string> argDict)
         {
             // Parse dates
-            if (argDict.TryGetValue("start-date", out string startDateStr))
+            if (argDict.TryGetValue("start-date", out string? startDateStr))
             {
                 if (!DateTime.TryParse(startDateStr, out DateTime parsedStartDate))
                 {
@@ -156,7 +156,7 @@ namespace GitStats.Services
                 StartDate = DateTime.Now.AddDays(-30);
             }
 
-            if (argDict.TryGetValue("end-date", out string endDateStr))
+            if (argDict.TryGetValue("end-date", out string? endDateStr))
             {
                 if (!DateTime.TryParse(endDateStr, out DateTime parsedEndDate))
                 {
