@@ -27,22 +27,8 @@ const WEEKEND_WARRIOR_THRESHOLDS = {
   // Above 40%: Weekend warrior
 };
 
-/**
- * Determines if a commit is a merge commit based on the commit message
- */
-function isMergeCommit(message: string): boolean {
-  // Common patterns for merge commits
-  const mergePatterns = [
-    /^merge(?:\s+(?:branch|pull\s+request|tag|remote))?\s+['\"]?[\w\-./]+['\"]?(?:\s+(?:into|to|with)\s+['\"]?[\w\-./]+['\"]?)?/i,
-    /^Merge pull request #\d+/i,
-    /^Merged in \w+/i,
-    /^Merged \w+ into \w+/i,
-    /^Automatic merge/i
-  ];
-  
-  // Check if the commit message matches any merge pattern
-  return mergePatterns.some(pattern => pattern.test(message));
-}
+// Removed the isMergeCommit function as it will be determined by the CLI
+// based on commit.Parents.Count() > 1
 
 export function parseCommitData(commits: CommitInfo[]): CommitInfo[] {
   return commits.map(commit => {
@@ -58,18 +44,13 @@ export function parseCommitData(commits: CommitInfo[]): CommitInfo[] {
       isPotentialCodeMove = isCodeMoveCommit(commit.Additions, commit.Deletions, codeMoveRatio);
     }
     
-    // Detect if this is a merge commit
-    const isMerge = commit.IsMergeCommit !== undefined 
-      ? commit.IsMergeCommit 
-      : isMergeCommit(commit.CommitMessage);
-    
     return {
       ...commit,
       CommitTime: commit.CommitTime || new Date().toISOString(),
       SentimentScore: sentimentScore,
       IsPotentialCodeMove: isPotentialCodeMove,
-      CodeMoveRatio: codeMoveRatio,
-      IsMergeCommit: isMerge
+      CodeMoveRatio: codeMoveRatio
+      // IsMergeCommit comes from the CLI based on commit.Parents.Count() > 1
     };
   });
 }

@@ -88,7 +88,7 @@ export const CommitFilters: React.FC<CommitFiltersProps> = ({
             Exclude merge commits
           </label>
           <div className="ml-2 text-xs text-gray-500">
-            (commits that merge one branch into another, e.g., "Merge branch 'feature' into 'main'")
+            (commits with multiple parents, typically created when merging branches)
           </div>
         </div>
 
