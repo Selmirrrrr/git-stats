@@ -10,6 +10,27 @@ namespace GitStats.Services
 {
     public class GitRepositoryService
     {
+        // Configuration for commit filtering
+        private readonly int _extremeCommitLineThreshold = 500; // Threshold for considering a commit as potentially "extreme"
+        private readonly double _moveCodeRatio = 0.8; // If deleted lines are X% of added lines, it's likely just moving code
+        private readonly bool _excludeExtremeMoves = true; // Whether to exclude extreme commits that are mostly code moves
+        
+        // Constructor with default values
+        public GitRepositoryService(
+            int? extremeCommitLineThreshold = null,
+            double? moveCodeRatio = null,
+            bool? excludeExtremeMoves = null)
+        {
+            if (extremeCommitLineThreshold.HasValue)
+                _extremeCommitLineThreshold = extremeCommitLineThreshold.Value;
+            
+            if (moveCodeRatio.HasValue)
+                _moveCodeRatio = moveCodeRatio.Value;
+                
+            if (excludeExtremeMoves.HasValue)
+                _excludeExtremeMoves = excludeExtremeMoves.Value;
+        }
+        
         public async Task<List<CommitInfo>> GetCommitsFromRepositoriesAsync(string baseFolder, DateTime startDate, DateTime endDate)
         {
             var commitsList = new List<CommitInfo>();
@@ -61,6 +82,12 @@ namespace GitStats.Services
 
                 // Calculate additions and deletions
                 var stats = CalculateCommitStats(repo, commit);
+                int additions = stats.Item1;
+                int deletions = stats.Item2;
+
+                // Calculate code move metrics
+                double codeMoveRatio = CalculateCodeMoveRatio(additions, deletions);
+                bool isPotentialCodeMove = IsCodeMoveCommit(additions, deletions, codeMoveRatio);
 
                 commitInfos.Add(new CommitInfo
                 {
@@ -69,13 +96,41 @@ namespace GitStats.Services
                     CommitterEmail = commit.Committer.Email,
                     CommitterName = commit.Committer.Name,
                     CommitMessage = commit.Message,
-                    Additions = stats.Item1,
-                    Deletions = stats.Item2,
-                    RepositoryName = repoName
+                    Additions = additions,
+                    Deletions = deletions,
+                    RepositoryName = repoName,
+                    IsPotentialCodeMove = isPotentialCodeMove,
+                    CodeMoveRatio = codeMoveRatio
                 });
             }
 
             return commitInfos;
+        }
+        
+        /// <summary>
+        /// Calculates the ratio of potential code movement (0-1)
+        /// </summary>
+        private double CalculateCodeMoveRatio(int additions, int deletions)
+        {
+            // If either additions or deletions are 0, there's no code move
+            if (additions == 0 || deletions == 0)
+                return 0;
+                
+            // Calculate the ratio of smaller to larger (to get a value between 0 and 1)
+            return (double)Math.Min(additions, deletions) / Math.Max(additions, deletions);
+        }
+        
+        /// <summary>
+        /// Determines if a commit is likely just moving code around without adding real value
+        /// </summary>
+        private bool IsCodeMoveCommit(int additions, int deletions, double ratio)
+        {
+            // If the commit is small, it's not considered an extreme commit regardless of ratios
+            if (additions + deletions < _extremeCommitLineThreshold)
+                return false;
+                
+            // If the ratio is above our threshold, it's likely a code move
+            return ratio >= _moveCodeRatio;
         }
 
         private (int, int) CalculateCommitStats(Repository repo, Commit commit)

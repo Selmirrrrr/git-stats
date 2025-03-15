@@ -2,6 +2,12 @@ import { CommitInfo, CommitterStats, BurnoutRiskLevel } from '../types';
 import { format, getHours, getDay, getMonth, getDate, isWeekend } from 'date-fns';
 import { analyzeSentiment } from './sentimentAnalyzer';
 
+// Define thresholds for code move detection (if not provided by backend)
+const DEFAULT_CODE_MOVE_SETTINGS = {
+  EXTREME_THRESHOLD: 500, // Line threshold for considering a commit extreme
+  MOVE_RATIO: 0.8,        // Ratio threshold for detecting code moves
+};
+
 // Define standard work hours (9 AM to 5 PM)
 const WORK_HOURS_START = 9;
 const WORK_HOURS_END = 17;
@@ -27,11 +33,90 @@ export function parseCommitData(commits: CommitInfo[]): CommitInfo[] {
     // Add sentiment score to each commit
     const sentimentScore = analyzeSentiment(commit.CommitMessage);
     
+    // If backend didn't provide code move detection, calculate it here
+    let isPotentialCodeMove = commit.IsPotentialCodeMove;
+    let codeMoveRatio = commit.CodeMoveRatio;
+    
+    if (isPotentialCodeMove === undefined || codeMoveRatio === undefined) {
+      codeMoveRatio = calculateCodeMoveRatio(commit.Additions, commit.Deletions);
+      isPotentialCodeMove = isCodeMoveCommit(commit.Additions, commit.Deletions, codeMoveRatio);
+    }
+    
     return {
       ...commit,
       CommitTime: commit.CommitTime || new Date().toISOString(),
-      SentimentScore: sentimentScore
+      SentimentScore: sentimentScore,
+      IsPotentialCodeMove: isPotentialCodeMove,
+      CodeMoveRatio: codeMoveRatio
     };
+  });
+}
+
+/**
+ * Calculates the ratio of potential code movement (0-1)
+ */
+function calculateCodeMoveRatio(additions: number, deletions: number): number {
+  // If either additions or deletions are 0, there's no code move
+  if (additions === 0 || deletions === 0) return 0;
+  
+  // Calculate the ratio of smaller to larger (to get a value between 0 and 1)
+  return Math.min(additions, deletions) / Math.max(additions, deletions);
+}
+
+/**
+ * Determines if a commit is likely just moving code around without adding real value
+ */
+function isCodeMoveCommit(additions: number, deletions: number, ratio: number): boolean {
+  // If the commit is small, it's not considered an extreme commit regardless of ratios
+  if (additions + deletions < DEFAULT_CODE_MOVE_SETTINGS.EXTREME_THRESHOLD) return false;
+  
+  // If the ratio is above our threshold, it's likely a code move
+  return ratio >= DEFAULT_CODE_MOVE_SETTINGS.MOVE_RATIO;
+}
+
+/**
+ * Filters commits to exclude extreme code moves based on user-adjustable thresholds
+ * This allows real-time filtering in the UI without re-fetching data
+ */
+export function filterExtremeCommits(
+  commits: CommitInfo[], 
+  options: { 
+    excludeCodeMoves: boolean;
+    extremeThreshold?: number;
+    moveRatio?: number;
+  }
+): CommitInfo[] {
+  if (!options.excludeCodeMoves) {
+    return commits;
+  }
+  
+  const threshold = options.extremeThreshold || DEFAULT_CODE_MOVE_SETTINGS.EXTREME_THRESHOLD;
+  const ratio = options.moveRatio || DEFAULT_CODE_MOVE_SETTINGS.MOVE_RATIO;
+  
+  return commits.filter(commit => {
+    // If already tagged by backend, use that value
+    if (commit.IsPotentialCodeMove !== undefined) {
+      // Recalculate only if thresholds are custom
+      if (options.extremeThreshold !== undefined || options.moveRatio !== undefined) {
+        const totalLines = commit.Additions + commit.Deletions;
+        // Skip this check if the commit is below threshold
+        if (totalLines < threshold) return true;
+        
+        // Otherwise check with custom ratio
+        const moveRatio = commit.CodeMoveRatio || calculateCodeMoveRatio(commit.Additions, commit.Deletions);
+        return moveRatio < ratio;
+      }
+      
+      return !commit.IsPotentialCodeMove;
+    }
+    
+    // Otherwise calculate here
+    const totalLines = commit.Additions + commit.Deletions;
+    // Skip small commits from filtering (always include them)
+    if (totalLines < threshold) return true;
+    
+    const moveRatio = commit.CodeMoveRatio || calculateCodeMoveRatio(commit.Additions, commit.Deletions);
+    return moveRatio < ratio;
   });
 }
 

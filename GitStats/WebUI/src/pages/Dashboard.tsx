@@ -7,11 +7,22 @@ import { BurnoutRiskCard } from '../components/BurnoutRiskCard';
 import { CommitHourHeatmap } from '../components/CommitHourHeatmap';
 import { WeekendWarriorsCard } from '../components/WeekendWarriorsCard';
 import { CommitSentimentCard } from '../components/CommitSentimentCard';
+import { CommitFilters } from '../components/CommitFilters';
 import { useCommitData } from '../hooks/useCommitData';
 
 export const Dashboard = () => {
   const [jsonPath, setJsonPath] = useState<string | undefined>();
-  const { commits, committerStats, loading, error } = useCommitData(jsonPath);
+  const { 
+    commits, 
+    committerStats, 
+    loading, 
+    error,
+    filterSettings,
+    setFilterSettings,
+    totalCommits,
+    filteredCommits,
+    excludedCommits
+  } = useCommitData(jsonPath);
 
   const handleFileLoad = (path: string) => {
     setJsonPath(path);
@@ -61,6 +72,15 @@ export const Dashboard = () => {
 
       {!loading && !error && commits.length > 0 && (
         <>
+          {/* Add commit filtering UI component */}
+          <CommitFilters 
+            filterSettings={filterSettings}
+            setFilterSettings={setFilterSettings}
+            totalCommits={totalCommits}
+            filteredCommits={filteredCommits}
+            excludedCommits={excludedCommits}
+          />
+        
           <div className="mb-6">
             <h2 className="text-2xl font-bold mb-4">Repository Overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

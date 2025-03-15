@@ -78,10 +78,24 @@ dotnet run --folder <repository-base-path> [--start-date <yyyy-MM-dd>] [--end-da
 - `--output-json`: Output JSON file path (default: git-stats.json)
 - `--output-csv`: Output CSV file path (default: git-stats.csv)
 
-#### Git Mode Example:
+#### Commit Filtering Options:
 
+- `--exclude-moves`: Whether to exclude extreme code-moving commits (default: true)
+- `--extreme-threshold`: Line threshold for considering a commit extreme (default: 500)
+- `--move-ratio`: Ratio threshold for detecting code moves (default: 0.8)
+
+These filtering options help exclude commits that likely just move code around without adding real value, such as large refactorings, file renames, or code reorganization that would otherwise skew the statistics.
+
+#### Git Mode Examples:
+
+Basic usage:
 ```
 dotnet run --folder /path/to/repositories --start-date 2024-01-01 --end-date 2024-03-01 --output-json stats.json --output-csv stats.csv
+```
+
+With commit filtering options:
+```
+dotnet run --folder /path/to/repositories --exclude-moves true --extreme-threshold 1000 --move-ratio 0.7 --output-json stats.json
 ```
 
 ### Running the Console Application - Bitbucket PR Mode

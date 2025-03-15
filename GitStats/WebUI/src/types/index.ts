@@ -8,6 +8,8 @@ export interface CommitInfo {
   Deletions: number;
   RepositoryName: string;
   SentimentScore?: number;  // Added sentiment score for each commit
+  IsPotentialCodeMove?: boolean; // Flag to indicate if this commit likely just moves code
+  CodeMoveRatio?: number; // Ratio of lines moved vs. added/deleted (0-1)
 }
 
 // Pull request related interfaces

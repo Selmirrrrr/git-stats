@@ -1,12 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CommitInfo, CommitterStats } from '../types';
-import { parseCommitData, getCommitterStats } from '../utils/commitAnalyzer';
+import { parseCommitData, getCommitterStats, filterExtremeCommits } from '../utils/commitAnalyzer';
+
+// Default filter settings
+const DEFAULT_FILTER_SETTINGS = {
+  excludeCodeMoves: true,
+  extremeThreshold: 500,
+  moveRatio: 0.8
+};
 
 export function useCommitData(filePath?: string) {
-  const [commits, setCommits] = useState<CommitInfo[]>([]);
-  const [committerStats, setCommitterStats] = useState<CommitterStats[]>([]);
+  // Raw commit data from JSON
+  const [rawCommits, setRawCommits] = useState<CommitInfo[]>([]);
+  
+  // Filtering settings
+  const [filterSettings, setFilterSettings] = useState(DEFAULT_FILTER_SETTINGS);
+  
+  // UI state
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Filtered commits based on current settings
+  const commits = useMemo(() => {
+    return filterExtremeCommits(rawCommits, filterSettings);
+  }, [rawCommits, filterSettings]);
+  
+  // Committer stats based on filtered commits
+  const committerStats = useMemo(() => {
+    return getCommitterStats(commits);
+  }, [commits]);
 
   const loadFile = async (path: string) => {
     try {
@@ -24,8 +46,7 @@ export function useCommitData(filePath?: string) {
       const data = await response.json();
       const parsedCommits = parseCommitData(data);
       
-      setCommits(parsedCommits);
-      setCommitterStats(getCommitterStats(parsedCommits));
+      setRawCommits(parsedCommits);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
       console.error('Error loading commit data:', err);
@@ -45,6 +66,13 @@ export function useCommitData(filePath?: string) {
     committerStats,
     loading,
     error,
-    loadFile
+    loadFile,
+    // Filtering controls
+    filterSettings,
+    setFilterSettings,
+    // Stats for filtered vs unfiltered
+    totalCommits: rawCommits.length,
+    filteredCommits: commits.length,
+    excludedCommits: rawCommits.length - commits.length
   };
 }

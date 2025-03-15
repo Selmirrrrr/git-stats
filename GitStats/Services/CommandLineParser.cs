@@ -11,6 +11,11 @@ namespace GitStats.Services
         public string? OutputJsonPath { get; private set; }
         public string? OutputCsvPath { get; private set; }
         
+        // Commit filtering options
+        public int? ExtremeCommitLineThreshold { get; private set; }
+        public double? MoveCodeRatio { get; private set; }
+        public bool ExcludeExtremeMoves { get; private set; } = true;
+        
         // Bitbucket PR service parameters
         public bool UsesBitbucket { get; private set; }
         public string? BitbucketUrl { get; private set; }
@@ -97,6 +102,31 @@ namespace GitStats.Services
             OutputCsvPath = argDict.TryGetValue("output-csv", out string? csvPath) 
                 ? csvPath 
                 : "git-stats.csv";
+                
+            // Parse commit filtering options
+            if (argDict.TryGetValue("exclude-moves", out string? excludeMovesStr))
+            {
+                if (bool.TryParse(excludeMovesStr, out bool excludeMoves))
+                {
+                    ExcludeExtremeMoves = excludeMoves;
+                }
+            }
+            
+            if (argDict.TryGetValue("extreme-threshold", out string? thresholdStr))
+            {
+                if (int.TryParse(thresholdStr, out int threshold))
+                {
+                    ExtremeCommitLineThreshold = threshold;
+                }
+            }
+            
+            if (argDict.TryGetValue("move-ratio", out string? ratioStr))
+            {
+                if (double.TryParse(ratioStr, out double ratio) && ratio >= 0 && ratio <= 1)
+                {
+                    MoveCodeRatio = ratio;
+                }
+            }
         }
         
         private void ParseBitbucketMode(Dictionary<string, string> argDict)
@@ -206,9 +236,12 @@ namespace GitStats.Services
             Console.WriteLine("  --end-date      End date for data range (default: today)");
             
             Console.WriteLine("\nCommit Mode Options:");
-            Console.WriteLine("  --folder        Base folder containing Git repositories");
-            Console.WriteLine("  --output-json   Output JSON file path for commit data (default: git-stats.json)");
-            Console.WriteLine("  --output-csv    Output CSV file path for commit data (default: git-stats.csv)");
+            Console.WriteLine("  --folder             Base folder containing Git repositories");
+            Console.WriteLine("  --output-json        Output JSON file path for commit data (default: git-stats.json)");
+            Console.WriteLine("  --output-csv         Output CSV file path for commit data (default: git-stats.csv)");
+            Console.WriteLine("  --exclude-moves      Whether to exclude extreme code-moving commits (default: true)");
+            Console.WriteLine("  --extreme-threshold  Line threshold for considering a commit extreme (default: 500)");
+            Console.WriteLine("  --move-ratio         Ratio threshold for detecting code moves (default: 0.8)");
             
             Console.WriteLine("\nBitbucket PR Mode Options:");
             Console.WriteLine("  --bitbucket-url       Bitbucket server URL");

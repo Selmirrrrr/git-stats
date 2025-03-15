@@ -44,7 +44,17 @@ namespace GitStats
             Console.WriteLine($"Processing Git repositories in: {parser.BaseFolder}");
             Console.WriteLine($"Date range: {parser.StartDate:yyyy-MM-dd} to {parser.EndDate:yyyy-MM-dd}");
             
-            var gitService = new GitRepositoryService();
+            // Create GitRepositoryService with filtering options
+            var gitService = new GitRepositoryService(
+                extremeCommitLineThreshold: parser.ExtremeCommitLineThreshold,
+                moveCodeRatio: parser.MoveCodeRatio,
+                excludeExtremeMoves: parser.ExcludeExtremeMoves
+            );
+            
+            if (parser.ExcludeExtremeMoves)
+            {
+                Console.WriteLine($"Excluding extreme code-moving commits (threshold: {parser.ExtremeCommitLineThreshold ?? 500} lines, ratio: {parser.MoveCodeRatio ?? 0.8:F1})");
+            }
             
             // Null check for BaseFolder
             if (parser.BaseFolder == null)
