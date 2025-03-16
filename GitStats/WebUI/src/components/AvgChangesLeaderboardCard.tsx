@@ -4,27 +4,31 @@ import { getTopCommitters } from '../utils/commitAnalyzer';
 import { BarChart } from './BarChart';
 import { LeaderboardModal } from './LeaderboardModal';
 
-interface TopCommittersCardProps {
+interface AvgChangesLeaderboardCardProps {
   committerStats: CommitterStats[];
-  sortBy: keyof CommitterStats;
   title: string;
+  sortDirection: 'asc' | 'desc';
   limit?: number;
   chartColor?: string;
 }
 
-export const TopCommittersCard = ({ 
+export const AvgChangesLeaderboardCard = ({ 
   committerStats, 
-  sortBy, 
   title, 
+  sortDirection,
   limit = 3,
   chartColor = 'rgba(75, 192, 192, 0.6)'
-}: TopCommittersCardProps) => {
+}: AvgChangesLeaderboardCardProps) => {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   
-  const topCommitters = getTopCommitters(committerStats, sortBy, limit, 'desc');
+  // Filter out committers with no commits
+  const validCommitters = committerStats.filter(c => c.totalCommits > 0);
+  
+  // Get top/bottom committers by average changes per commit
+  const sortedCommitters = getTopCommitters(validCommitters, 'avgChangesPerCommit', limit, sortDirection);
   
   // Create labels that include both name and email
-  const chartLabels = topCommitters.map(c => {
+  const chartLabels = sortedCommitters.map(c => {
     // Extract username part from email (before the @ symbol)
     const username = c.email.split('@')[0];
     return username;
@@ -56,8 +60,8 @@ export const TopCommittersCard = ({
           labels={chartLabels}
           datasets={[
             {
-              label: getSortByLabel(sortBy),
-              data: topCommitters.map(c => c[sortBy] as number),
+              label: 'Avg Changes/Commit',
+              data: sortedCommitters.map(c => c.avgChangesPerCommit),
               backgroundColor: chartColor
             }
           ]}
@@ -70,15 +74,17 @@ export const TopCommittersCard = ({
               <tr>
                 <th className="pb-2">Name</th>
                 <th className="pb-2">Email</th>
-                <th className="pb-2 text-right">{getSortByLabel(sortBy)}</th>
+                <th className="pb-2 text-right">Avg Changes/Commit</th>
+                <th className="pb-2 text-right">Total Commits</th>
               </tr>
             </thead>
             <tbody>
-              {topCommitters.map((committer, index) => (
+              {sortedCommitters.map((committer, index) => (
                 <tr key={index} className="border-b border-gray-100 dark:border-gray-700">
                   <td className="py-1">{committer.name}</td>
                   <td className="py-1 text-gray-600 dark:text-gray-400">{committer.email}</td>
-                  <td className="py-1 text-right">{committer[sortBy] as number}</td>
+                  <td className="py-1 text-right">{committer.avgChangesPerCommit}</td>
+                  <td className="py-1 text-right">{committer.totalCommits}</td>
                 </tr>
               ))}
             </tbody>
@@ -89,30 +95,10 @@ export const TopCommittersCard = ({
       <LeaderboardModal
         isOpen={isLeaderboardOpen}
         onClose={closeLeaderboard}
-        committerStats={committerStats}
-        sortBy={sortBy}
+        committerStats={validCommitters}
+        sortBy="avgChangesPerCommit"
         title={title}
       />
     </>
   );
 };
-
-// Helper function to get a human-readable label for the sort criteria
-function getSortByLabel(sortBy: keyof CommitterStats): string {
-  switch (sortBy) {
-    case 'totalCommits':
-      return 'Commits';
-    case 'totalAdditions':
-      return 'Additions';
-    case 'totalDeletions':
-      return 'Deletions';
-    case 'totalChanges':
-      return 'Changes';
-    case 'earlyMorningCommits':
-      return 'Early Commits';
-    case 'avgChangesPerCommit':
-      return 'Avg Changes/Commit';
-    default:
-      return String(sortBy);
-  }
-}

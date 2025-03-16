@@ -153,7 +153,10 @@ export function getCommitterStats(commits: CommitInfo[]): CommitterStats[] {
       averageSentiment: 0,
       positivePct: 0,
       negativePct: 0,
-      weekendCommitPct: 0
+      weekendCommitPct: 0,
+      
+      // Average changes per commit
+      avgChangesPerCommit: 0
     };
 
     const commitTime = new Date(commit.CommitTime);
@@ -215,6 +218,13 @@ export function getCommitterStats(commits: CommitInfo[]): CommitterStats[] {
       (earlyMorningPercent * 0.4) + 
       (weekendPercent * 0.2)
     ));
+    
+    // Calculate average changes per commit
+    if (stats.totalCommits > 0) {
+      stats.avgChangesPerCommit = Math.round((stats.totalChanges / stats.totalCommits) * 10) / 10; // Round to 1 decimal
+    } else {
+      stats.avgChangesPerCommit = 0;
+    }
     
     // Calculate sentiment stats
     const sentimentScores = sentimentMap.get(stats.email) || [];
@@ -309,9 +319,11 @@ export function getCommitsByHour(commits: CommitInfo[]): { label: string, count:
   }));
 }
 
-export function getTopCommitters(committerStats: CommitterStats[], sortBy: keyof CommitterStats, limit: number = 3): CommitterStats[] {
+export function getTopCommitters(committerStats: CommitterStats[], sortBy: keyof CommitterStats, limit: number = 3, sortDirection: 'asc' | 'desc' = 'desc'): CommitterStats[] {
   return [...committerStats]
-    .sort((a, b) => (b[sortBy] as number) - (a[sortBy] as number))
+    .sort((a, b) => sortDirection === 'desc' 
+      ? (b[sortBy] as number) - (a[sortBy] as number)
+      : (a[sortBy] as number) - (b[sortBy] as number))
     .slice(0, limit);
 }
 

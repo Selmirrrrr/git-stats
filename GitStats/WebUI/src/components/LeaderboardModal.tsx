@@ -175,6 +175,8 @@ function getSortByLabel(sortBy: keyof CommitterStats): string {
       return 'Changes';
     case 'earlyMorningCommits':
       return 'Early Commits';
+    case 'avgChangesPerCommit':
+      return 'Avg Changes/Commit';
     default:
       return String(sortBy);
   }

@@ -86,6 +86,9 @@ export interface CommitterStats {
   // Weekend warrior stats
   weekendCommitPct: number;    // Percentage of commits made on weekends
   weekdayCommits: number;      // Number of commits made on weekdays
+  
+  // Average changes per commit
+  avgChangesPerCommit: number; // Average changes (additions + deletions) per commit
 }
 
 export interface BurnoutRiskLevel {

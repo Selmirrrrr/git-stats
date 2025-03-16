@@ -9,6 +9,7 @@ import { WeekendWarriorsCard } from '../components/WeekendWarriorsCard';
 import { CommitSentimentCard } from '../components/CommitSentimentCard';
 import { CommitFilters } from '../components/CommitFilters';
 import { CommitListGrid } from '../components/CommitListGrid';
+import { AvgChangesLeaderboardCard } from '../components/AvgChangesLeaderboardCard';
 import { useCommitData } from '../hooks/useCommitData';
 
 export const Dashboard = () => {
@@ -173,7 +174,7 @@ export const Dashboard = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <TopCommittersCard
                 committerStats={committerStats}
                 sortBy="totalAdditions"
@@ -186,6 +187,23 @@ export const Dashboard = () => {
                 sortBy="totalDeletions"
                 title="Top Committers (by Deletions)"
                 chartColor="rgba(255, 159, 64, 0.6)"
+              />
+            </div>
+            
+            <h3 className="text-xl font-bold mb-4">Average Changes per Commit</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <AvgChangesLeaderboardCard
+                committerStats={committerStats}
+                sortDirection="desc"
+                title="Most Changes per Commit"
+                chartColor="rgba(153, 102, 255, 0.6)"
+              />
+              
+              <AvgChangesLeaderboardCard
+                committerStats={committerStats}
+                sortDirection="asc"
+                title="Least Changes per Commit"
+                chartColor="rgba(201, 203, 207, 0.6)"
               />
             </div>
           </div>
