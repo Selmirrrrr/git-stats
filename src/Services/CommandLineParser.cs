@@ -1,37 +1,10 @@
-using System;
-using System.Collections.Generic;
+using GitStats.Models;
 
 namespace GitStats.Services
 {
     public class CommandLineParser
     {
-        public string? BaseFolder { get; private set; }
-        public DateTime StartDate { get; private set; }
-        public DateTime EndDate { get; private set; }
-        public string? OutputJsonPath { get; private set; }
-        public string? OutputCsvPath { get; private set; }
-        
-        // Commit filtering options
-        public int? ExtremeCommitLineThreshold { get; private set; }
-        public double? MoveCodeRatio { get; private set; }
-        public bool ExcludeExtremeMoves { get; private set; } = true;
-        
-        // Bitbucket PR service parameters
-        public bool UsesBitbucket { get; private set; }
-        public string? BitbucketUrl { get; private set; }
-        public string? BitbucketUsername { get; private set; }
-        public string? BitbucketPassword { get; private set; }
-        public string? BitbucketApiKey { get; private set; }
-        public bool UsesBitbucketApiKey { get; private set; }
-        public string? BitbucketProject { get; private set; }
-        public string? BitbucketPrJsonPath { get; private set; }
-
-        public CommandLineParser(string[] args)
-        {
-            ParseArguments(args);
-        }
-
-        private void ParseArguments(string[] args)
+        private Dictionary<string, string> ArgsToDict(string[] args)
         {
             if (args.Length < 1)
             {
@@ -62,20 +35,16 @@ namespace GitStats.Services
                     }
                 }
             }
-            
-            // Determine which mode we're operating in: Git commits or Bitbucket PRs
-            if (argDict.ContainsKey("mode") && argDict["mode"] == "bitbucket-pr")
-            {
-                ParseBitbucketMode(argDict);
-            }
-            else
-            {
-                ParseCommitsMode(argDict);
-            }
+
+            return argDict;
         }
         
-        private void ParseCommitsMode(Dictionary<string, string> argDict)
+        public GitParameters ParseCommitsMode(string[] args)
         {
+            var argDict = ArgsToDict(args);
+
+            var gitParams = new GitParameters();
+
             if (!argDict.ContainsKey("folder"))
             {
                 Console.WriteLine("Error: Base folder path is required for commits mode.");
@@ -83,56 +52,37 @@ namespace GitStats.Services
                 Environment.Exit(1);
             }
 
-            BaseFolder = argDict["folder"];
+            gitParams.BaseFolder = argDict["folder"];
 
-            if (!System.IO.Directory.Exists(BaseFolder))
+            if (!Directory.Exists(gitParams.BaseFolder))
             {
-                Console.WriteLine($"Error: Folder does not exist: {BaseFolder}");
+                Console.WriteLine($"Error: Folder does not exist: {gitParams.BaseFolder}");
                 Environment.Exit(1);
             }
             
-            // Parse dates
-            ParseCommonDateParams(argDict);
+            // Parse common date parameters
+            var (startDate, endDate) = ParseCommonDateParams(argDict);
+            gitParams.StartDate = startDate;
+            gitParams.EndDate = endDate;
             
             // Set output paths
-            OutputJsonPath = argDict.TryGetValue("output-json", out string? jsonPath) 
+            gitParams.OutputJsonPath = argDict.TryGetValue("output-json", out string? jsonPath) 
                 ? jsonPath 
                 : "git-stats.json";
 
-            OutputCsvPath = argDict.TryGetValue("output-csv", out string? csvPath) 
+            gitParams.OutputCsvPath = argDict.TryGetValue("output-csv", out string? csvPath) 
                 ? csvPath 
                 : "git-stats.csv";
-                
-            // Parse commit filtering options
-            if (argDict.TryGetValue("exclude-moves", out string? excludeMovesStr))
-            {
-                if (bool.TryParse(excludeMovesStr, out bool excludeMoves))
-                {
-                    ExcludeExtremeMoves = excludeMoves;
-                }
-            }
-            
-            if (argDict.TryGetValue("extreme-threshold", out string? thresholdStr))
-            {
-                if (int.TryParse(thresholdStr, out int threshold))
-                {
-                    ExtremeCommitLineThreshold = threshold;
-                }
-            }
-            
-            if (argDict.TryGetValue("move-ratio", out string? ratioStr))
-            {
-                if (double.TryParse(ratioStr, out double ratio) && ratio >= 0 && ratio <= 1)
-                {
-                    MoveCodeRatio = ratio;
-                }
-            }
+
+            return gitParams;
         }
         
-        private void ParseBitbucketMode(Dictionary<string, string> argDict)
+        public BitbucketParameters ParseBitbucketMode(string[] args)
         {
-            UsesBitbucket = true;
-            
+            var argDict = ArgsToDict(args);
+
+            var bitbucketParams = new BitbucketParameters();
+
             // Validate required parameters for Bitbucket mode
             if (!argDict.ContainsKey("bitbucket-url"))
             {
@@ -150,9 +100,8 @@ namespace GitStats.Services
             
             // Check for either username/password OR API key authentication
             bool hasApiKey = argDict.ContainsKey("bitbucket-api-key");
-            bool hasCredentials = argDict.ContainsKey("bitbucket-username") && argDict.ContainsKey("bitbucket-password");
             
-            if (!hasApiKey && !hasCredentials)
+            if (!hasApiKey)
             {
                 Console.WriteLine("Error: Either Bitbucket API key or username/password credentials are required.");
                 Console.WriteLine("Use --bitbucket-api-key for API key authentication (recommended)");
@@ -162,32 +111,28 @@ namespace GitStats.Services
             }
             
             // Parse Bitbucket parameters
-            BitbucketUrl = argDict["bitbucket-url"];
-            
-            // Determine which authentication method to use
-            if (hasApiKey)
-            {
-                UsesBitbucketApiKey = true;
-                BitbucketApiKey = argDict["bitbucket-api-key"];
-            }
-            else
-            {
-                BitbucketUsername = argDict["bitbucket-username"];
-                BitbucketPassword = argDict["bitbucket-password"];
-            }
-            BitbucketProject = argDict["bitbucket-project"];
+            bitbucketParams.BitbucketUrl = argDict["bitbucket-url"];
+            bitbucketParams.BitbucketApiKey = argDict["bitbucket-api-key"];
+            bitbucketParams.BitbucketProject = argDict["bitbucket-project"];
             
             // Parse common date parameters
-            ParseCommonDateParams(argDict);
+            var (startDate, endDate) = ParseCommonDateParams(argDict);
+            bitbucketParams.StartDate = startDate;
+            bitbucketParams.EndDate = endDate;
             
             // Set output paths for PR data
-            BitbucketPrJsonPath = argDict.TryGetValue("output-pr-json", out string? prJsonPath) 
+            bitbucketParams.BitbucketPrJsonPath = argDict.TryGetValue("output-pr-json", out string? prJsonPath) 
                 ? prJsonPath 
                 : "bitbucket-prs.json";
+
+            return bitbucketParams;
         }
         
-        private void ParseCommonDateParams(Dictionary<string, string> argDict)
+        private (DateTime StartDate, DateTime EndDate) ParseCommonDateParams(Dictionary<string, string> argDict)
         {
+            var startDate = DateTime.Now.AddDays(-30);
+            var endDate = DateTime.Now;
+
             // Parse dates
             if (argDict.TryGetValue("start-date", out string? startDateStr))
             {
@@ -196,12 +141,7 @@ namespace GitStats.Services
                     Console.WriteLine($"Error: Invalid start date format: {startDateStr}. Use yyyy-MM-dd format.");
                     Environment.Exit(1);
                 }
-                StartDate = parsedStartDate;
-            }
-            else
-            {
-                // Default to 30 days ago if not specified
-                StartDate = DateTime.Now.AddDays(-30);
+                startDate = parsedStartDate;
             }
 
             if (argDict.TryGetValue("end-date", out string? endDateStr))
@@ -211,13 +151,10 @@ namespace GitStats.Services
                     Console.WriteLine($"Error: Invalid end date format: {endDateStr}. Use yyyy-MM-dd format.");
                     Environment.Exit(1);
                 }
-                EndDate = parsedEndDate;
+                endDate = parsedEndDate;
             }
-            else
-            {
-                // Default to current date if not specified
-                EndDate = DateTime.Now;
-            }
+
+            return (startDate, endDate);
         }
 
         public void ShowHelp()
@@ -239,15 +176,10 @@ namespace GitStats.Services
             Console.WriteLine("  --folder             Base folder containing Git repositories");
             Console.WriteLine("  --output-json        Output JSON file path for commit data (default: git-stats.json)");
             Console.WriteLine("  --output-csv         Output CSV file path for commit data (default: git-stats.csv)");
-            Console.WriteLine("  --exclude-moves      Whether to exclude extreme code-moving commits (default: true)");
-            Console.WriteLine("  --extreme-threshold  Line threshold for considering a commit extreme (default: 500)");
-            Console.WriteLine("  --move-ratio         Ratio threshold for detecting code moves (default: 0.8)");
             
             Console.WriteLine("\nBitbucket PR Mode Options:");
             Console.WriteLine("  --bitbucket-url       Bitbucket server URL");
             Console.WriteLine("  --bitbucket-api-key   Bitbucket API key for Bearer token authentication (recommended)");
-            Console.WriteLine("  --bitbucket-username  Bitbucket username (legacy basic auth)");
-            Console.WriteLine("  --bitbucket-password  Bitbucket password (legacy basic auth)");
             Console.WriteLine("  --bitbucket-project   Bitbucket project key");
             Console.WriteLine("  --output-pr-json      Output JSON file path for PR data (default: bitbucket-prs.json)");
         }

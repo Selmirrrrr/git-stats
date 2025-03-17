@@ -1,7 +1,4 @@
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
 using GitStats.Models;

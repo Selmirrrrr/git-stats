@@ -10,7 +10,7 @@ dotnet build
 
 # Build React web dashboard
 echo "Building React web dashboard..."
-cd WebUI
+cd src/WebUI
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
@@ -33,7 +33,7 @@ echo "To run the console application:"
 echo "dotnet run --folder <repository-base-path> [--start-date <yyyy-MM-dd>] [--end-date <yyyy-MM-dd>]"
 echo ""
 echo "To run the web dashboard in development mode:"
-echo "cd WebUI && npm run dev"
+echo "cd src/WebUI && npm run dev"
 echo ""
 echo "To serve the production build of the dashboard:"
-echo "cd WebUI/dist && npx serve"
+echo "cd src/WebUI/dist && npx serve"

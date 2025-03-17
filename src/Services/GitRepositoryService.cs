@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using GitStats.Models;
 using LibGit2Sharp;
 
@@ -10,16 +5,6 @@ namespace GitStats.Services
 {
     public class GitRepositoryService
     {
-        // Configuration for commit filtering
-        private readonly double _moveCodeRatio = 0.8; // If deleted lines are X% of added lines, it's likely just moving code
-        
-        // Constructor with default values
-        public GitRepositoryService(double? moveCodeRatio = null)
-        {
-            if (moveCodeRatio.HasValue)
-                _moveCodeRatio = moveCodeRatio.Value;
-        }
-        
         public async Task<List<CommitInfo>> GetCommitsFromRepositoriesAsync(string baseFolder, DateTime startDate, DateTime endDate)
         {
             var commitsList = new List<CommitInfo>();
@@ -76,7 +61,6 @@ namespace GitStats.Services
 
                 // Calculate code move metrics
                 double codeMoveRatio = CalculateCodeMoveRatio(additions, deletions);
-                bool isPotentialCodeMove = IsCodeMoveCommit(additions, deletions, codeMoveRatio);
 
                 commitInfos.Add(new CommitInfo
                 {
@@ -88,7 +72,6 @@ namespace GitStats.Services
                     Additions = additions,
                     Deletions = deletions,
                     RepositoryName = repoName,
-                    IsPotentialCodeMove = isPotentialCodeMove,
                     CodeMoveRatio = codeMoveRatio,
                     IsMergeCommit = commit.Parents.Count() > 1
                 });
@@ -109,21 +92,8 @@ namespace GitStats.Services
             // Calculate the ratio of smaller to larger (to get a value between 0 and 1)
             return (double)Math.Min(additions, deletions) / Math.Max(additions, deletions);
         }
-        
-        /// <summary>
-        /// Determines if a commit is likely just moving code around without adding real value
-        /// </summary>
-        private bool IsCodeMoveCommit(int additions, int deletions, double ratio)
-        {
-            // Must have both additions and deletions to be a move
-            if (additions == 0 || deletions == 0)
-                return false;
-                
-            // If the ratio is above our threshold, it's likely a code move
-            return ratio >= _moveCodeRatio;
-        }
 
-        private (int, int) CalculateCommitStats(Repository repo, Commit commit)
+        private static (int, int) CalculateCommitStats(Repository repo, Commit commit)
         {
             try
             {
